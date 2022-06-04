@@ -10,6 +10,7 @@
 // libraries
 #include <stdio.h>
 #include <stdint.h> 
+#include <stdlib.h>
 
 /******************************\
  ==============================
@@ -40,21 +41,19 @@ uint8_t move_offsets[] = {
 };
 
 uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00};
-int mat_score = 0x00, pos_score = 0x00, eval = 0x00;
+uint8_t mat_score = 0x00, pos_score = 0x00;
+uint8_t mat_white = 0, mat_black = 0, pos_white = 0, pos_black = 0;
 int score;
 uint8_t best_src, best_dst;
 uint8_t side = 0x08;
 
 int Search(uint8_t depth) {
-  //int best_score = 0x7F | 0x80;
-  int best_score = -0x7F;
+  uint8_t b_score = 0xFF;
   uint8_t temp_src = 0x00, temp_dst = 0x00;
   uint8_t src_square, dst_square, piece, type, captured_piece, directions, step_vector;
   
   if (depth == 0x00) {
-    mat_score = 0x00, pos_score = 0x00, eval = 0x00;
-    
-    int mat_white = 0, mat_black = 0, pos_white = 0, pos_black = 0;
+    mat_white = 0, mat_black = 0, pos_white = 0; pos_black = 0;
     
     for(src_square = 0; src_square < 0x80; src_square++) {
       if(!(src_square & 0x88)) {
@@ -76,33 +75,24 @@ int Search(uint8_t depth) {
     if ((mat_score & 0x80) && (pos_score & 0x80)) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
-      //eval = (mat_score + pos_score) | 0x80; // correct
-      eval = -(mat_score + pos_score);
-      return (side == 0x08) ? eval : -eval;
+      return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score);
     }
     
     else if (mat_score & 0x80) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
-      if (pos_score >= mat_score) eval = pos_score - mat_score;
-      //else eval = (mat_score - pos_score) | 0x80; // correct
-      else eval = -(mat_score - pos_score);
-      return (side == 0x08) ? eval : -eval;
+      if (pos_score >= mat_score) return (side == 0x08) ? (pos_score - mat_score) : (pos_score - mat_score) | 0x80;
+      else return (side == 0x08) ? (mat_score - pos_score) | 0x80 : (mat_score - pos_score);
     }
     
     else if (pos_score & 0x80) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
-      if (mat_score >= pos_score) eval = mat_score - pos_score;
-      //else eval = (pos_score - mat_score) | 0x80; // correct
-      else eval = -(pos_score - mat_score);
-      return (side == 0x08) ? eval : -eval;
+      if (mat_score >= pos_score) return (side == 0x08) ? (mat_score - pos_score) : (mat_score - pos_score) | 0x80;//eval = mat_score - pos_score;
+      else return (side == 0x08) ? (pos_score - mat_score) | 0x80 : (pos_score - mat_score); // correct
     }
     
-    else {    
-      eval = mat_score + pos_score;
-      return (side == 0x08) ? eval : -eval;
-    }
+    else return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80;
   }
    
   for(src_square = 0x00; src_square < 0x80; src_square++) {
@@ -126,14 +116,24 @@ int Search(uint8_t depth) {
             side = 0x18 - side;
             //PrintBoard(); getchar();
             score = Search(depth - 0x01);
-            score = -score;
             
+            
+            if (abs(score) & 0x80) score = -(abs(score) & 0x7F);
+            score = -score;
+
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
             //PrintBoard(); getchar();
-            if (score > best_score) {
-              best_score = score;
+                        
+            if ( score > ((b_score & 0x80) ? -(int)(b_score & 0x7F) : b_score) ) { 
+              b_score = (score < 0) ? (abs(score) | 0x80) : score;
+              
+              
+
+              
+              
+              
               temp_src = src_square;
               temp_dst = dst_square;
             }
@@ -149,7 +149,7 @@ int Search(uint8_t depth) {
   
   best_src = temp_src;
   best_dst = temp_dst;
-  return best_score;  
+  return ((b_score & 0x80) ? -(int)(b_score & 0x7F) : b_score);
 }
 
 /******************************\
@@ -194,3 +194,4 @@ int main () {
   printf("Checkmate!\n");
   return 0;
 }
+
