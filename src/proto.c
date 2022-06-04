@@ -44,11 +44,12 @@ uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00
 uint8_t mat_score = 0x00, pos_score = 0x00;
 uint8_t mat_white = 0, mat_black = 0, pos_white = 0, pos_black = 0;
 int score;
+uint8_t u_score;
 uint8_t best_src, best_dst;
 uint8_t side = 0x08;
 
-int Search(uint8_t depth) {
-  uint8_t b_score = 0xFF;
+uint8_t Search(uint8_t depth) {
+  uint8_t best_score = 0xFF;
   uint8_t temp_src = 0x00, temp_dst = 0x00;
   uint8_t src_square, dst_square, piece, type, captured_piece, directions, step_vector;
   
@@ -75,7 +76,9 @@ int Search(uint8_t depth) {
     if ((mat_score & 0x80) && (pos_score & 0x80)) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
-      return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score);
+      // and here!!!
+      return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score); //initial
+      //return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80; // alt
     }
     
     else if (mat_score & 0x80) {
@@ -92,7 +95,9 @@ int Search(uint8_t depth) {
       else return (side == 0x08) ? (pos_score - mat_score) | 0x80 : (pos_score - mat_score); // correct
     }
     
-    else return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80;
+    // diff here!!!
+    else return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80; // initial
+    //else return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score); // alternative
   }
    
   for(src_square = 0x00; src_square < 0x80; src_square++) {
@@ -116,9 +121,13 @@ int Search(uint8_t depth) {
             side = 0x18 - side;
             //PrintBoard(); getchar();
             score = Search(depth - 0x01);
+            u_score = score;
+            //printf("%d %d\n", score, u_score);
             
             
+            //if (score) printf("%d\n", score);
             if (abs(score) & 0x80) score = -(abs(score) & 0x7F);
+            
             score = -score;
 
             board[dst_square] = captured_piece;
@@ -126,14 +135,8 @@ int Search(uint8_t depth) {
             side = 0x18 - side;
             //PrintBoard(); getchar();
                         
-            if ( score > ((b_score & 0x80) ? -(int)(b_score & 0x7F) : b_score) ) { 
-              b_score = (score < 0) ? (abs(score) | 0x80) : score;
-              
-              
-
-              
-              
-              
+            if ( score > ((best_score & 0x80) ? -(int)(best_score & 0x7F) : best_score) ) { 
+              best_score = (score < 0) ? (abs(score) | 0x80) : score;              
               temp_src = src_square;
               temp_dst = dst_square;
             }
@@ -141,6 +144,7 @@ int Search(uint8_t depth) {
             captured_piece += type < 0x05;
             if(type < 0x03 & 0x06*side + (dst_square & 0x70) == 0x80)captured_piece--;
           }
+
           while(!captured_piece);
         }
       }
@@ -149,7 +153,7 @@ int Search(uint8_t depth) {
   
   best_src = temp_src;
   best_dst = temp_dst;
-  return ((b_score & 0x80) ? -(int)(b_score & 0x7F) : b_score);
+  return best_score;
 }
 
 /******************************\
@@ -183,12 +187,12 @@ void PrintBoard() {
 int main () {
   PrintBoard();
   while(1) {
-    int score = Search(0x03);
+    uint8_t score = Search(0x03);
     board[best_dst] = board[best_src];
     board[best_src] = 0;
     side = 0x18 - side;
-    //PrintBoard(); getchar();
-    if (score == -0x7F) break;
+    PrintBoard(); getchar();
+    if (score == abs(0x7F)) break;
   }
   PrintBoard();
   printf("Checkmate!\n");
