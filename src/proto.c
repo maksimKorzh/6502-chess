@@ -121,7 +121,7 @@ uint8_t Search(uint8_t depth) {
             side = 0x18 - side;
             if ((score & 0x80) == 0x00 && (best_score & 0x80) == 0x00) found_better = ((score & 0x7F) > (best_score & 0x7F)) ? 0x01 : 0x00;
             else if ((score & 0x80) && (best_score & 0x80)) found_better = ((score & 0x7F) < (best_score & 0x7F)) ? 0x01 : 0x00;
-            else if ((score & 0x80) == 0 && (best_score & 0x80)) found_better = 0x01;
+            else if ((score & 0x80) == 0x00 && (best_score & 0x80)) found_better = 0x01;
             else if ((score & 0x80) && (best_score & 0x80) == 0x00) found_better = 0x00;
             if (found_better) {             
               best_score = score;
