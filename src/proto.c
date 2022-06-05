@@ -43,7 +43,7 @@ uint8_t move_offsets[] = {
 uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00};
 uint8_t mat_score = 0x00, pos_score = 0x00;
 uint8_t mat_white = 0, mat_black = 0, pos_white = 0, pos_black = 0;
-uint8_t u_score;
+uint8_t score;
 uint8_t best_src, best_dst;
 uint8_t side = 0x08;
 
@@ -114,17 +114,17 @@ uint8_t Search(uint8_t depth) {
             board[dst_square] = piece;
             board[src_square] = 0x00;
             side = 0x18 - side;
-            u_score = Search(depth - 0x01);
-            u_score = (u_score & 0x80) ? (u_score & 0x7F) : (u_score | 0x80);
+            score = Search(depth - 0x01);
+            score = (score & 0x80) ? (score & 0x7F) : (score | 0x80);
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
-            if ((u_score & 0x80) == 0 && (best_score & 0x80) == 0) found_better = ((u_score & 0x7F) > (best_score & 0x7F)) ? 1 : 0;
-            else if ((u_score & 0x80) && (best_score & 0x80)) found_better = ((u_score & 0x7F) < (best_score & 0x7F)) ? 1 : 0;
-            else if ((u_score & 0x80) == 0 && (best_score & 0x80)) found_better = 1;
-            else if ((u_score & 0x80) && (best_score & 0x80) == 0) found_better = 0;
+            if ((score & 0x80) == 0 && (best_score & 0x80) == 0) found_better = ((score & 0x7F) > (best_score & 0x7F)) ? 1 : 0;
+            else if ((score & 0x80) && (best_score & 0x80)) found_better = ((score & 0x7F) < (best_score & 0x7F)) ? 1 : 0;
+            else if ((score & 0x80) == 0 && (best_score & 0x80)) found_better = 1;
+            else if ((score & 0x80) && (best_score & 0x80) == 0) found_better = 0;
             if (found_better) {             
-              best_score = u_score;
+              best_score = score;
               temp_src = src_square;
               temp_dst = dst_square;
             }
