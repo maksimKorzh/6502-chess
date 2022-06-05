@@ -43,13 +43,12 @@ uint8_t move_offsets[] = {
 uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00};
 uint8_t mat_score = 0x00, pos_score = 0x00;
 uint8_t mat_white = 0, mat_black = 0, pos_white = 0, pos_black = 0;
-int score;
 uint8_t u_score;
 uint8_t best_src, best_dst;
 uint8_t side = 0x08;
 
 uint8_t Search(uint8_t depth) {
-  uint8_t best_score = 0xFF;
+  uint8_t best_score = 0xFF, found_better = 0;
   uint8_t temp_src = 0x00, temp_dst = 0x00;
   uint8_t src_square, dst_square, piece, type, captured_piece, directions, step_vector;
   
@@ -76,9 +75,7 @@ uint8_t Search(uint8_t depth) {
     if ((mat_score & 0x80) && (pos_score & 0x80)) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
-      // and here!!!
-      return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score); //initial
-      //return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80; // alt
+      return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score);
     }
     
     else if (mat_score & 0x80) {
@@ -92,12 +89,10 @@ uint8_t Search(uint8_t depth) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
       if (mat_score >= pos_score) return (side == 0x08) ? (mat_score - pos_score) : (mat_score - pos_score) | 0x80;//eval = mat_score - pos_score;
-      else return (side == 0x08) ? (pos_score - mat_score) | 0x80 : (pos_score - mat_score); // correct
+      else return (side == 0x08) ? (pos_score - mat_score) | 0x80 : (pos_score - mat_score);
     }
-    
-    // diff here!!!
-    else return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80; // initial
-    //else return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score); // alternative
+
+    else return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80;
   }
    
   for(src_square = 0x00; src_square < 0x80; src_square++) {
@@ -115,41 +110,21 @@ uint8_t Search(uint8_t depth) {
             captured_piece = board[dst_square];
             if(captured_piece & side) break;
             if(type < 0x03 && !(step_vector & 0x07) != !captured_piece) break;
-            if((captured_piece & 0x07) == 0x03)  return 0x7F;
+            if((captured_piece & 0x07) == 0x03)  return 0x7F;            
             board[dst_square] = piece;
             board[src_square] = 0x00;
             side = 0x18 - side;
-            //PrintBoard(); getchar();
-            score = Search(depth - 0x01);
-            u_score = score;
-            
-            
-            
-            // convert ot negative signed
-            if (abs(score) & 0x80) score = -(abs(score) & 0x7F);
-
-            score = -score;
+            u_score = Search(depth - 0x01);
             u_score = (u_score & 0x80) ? (u_score & 0x7F) : (u_score | 0x80);
-            
-            //uint8_t compare_score =  u_score & 0x7F;
-            //int sign = (u_score & 0x80) ? -(int)compare_score : compare_score;
-            //if (score != sign) printf("%d %d\n", score, sign);
-
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
-            //PrintBoard(); getchar();
-            
-            uint8_t better = 0;
-            
-            if ((u_score & 0x80) == 0 && (best_score & 0x80) == 0) better = ((u_score & 0x7F) > (best_score & 0x7F)) ? 1 : 0;//printf("both positive %X %X\n", u_score, best_score);
-            else if ((u_score & 0x80) && (best_score & 0x80)) better = ((u_score & 0x7F) < (best_score & 0x7F)) ? 1 : 0; //printf("both negatives %X %X\n", u_score, best_score);
-            else if ((u_score & 0x80) == 0 && (best_score & 0x80)) better = 1;//printf("score positive, best negative %X %X\n", u_score, best_score);
-            else if ((u_score & 0x80) && (best_score & 0x80) == 0) better = 0;//printf("score negative, best positive %X %X\n", u_score, best_score);
-            
-            if (better) {        
-            //if ( score > ((best_score & 0x80) ? -(int)(best_score & 0x7F) : best_score) ) { 
-              best_score = (score < 0) ? (abs(score) | 0x80) : score;              
+            if ((u_score & 0x80) == 0 && (best_score & 0x80) == 0) found_better = ((u_score & 0x7F) > (best_score & 0x7F)) ? 1 : 0;
+            else if ((u_score & 0x80) && (best_score & 0x80)) found_better = ((u_score & 0x7F) < (best_score & 0x7F)) ? 1 : 0;
+            else if ((u_score & 0x80) == 0 && (best_score & 0x80)) found_better = 1;
+            else if ((u_score & 0x80) && (best_score & 0x80) == 0) found_better = 0;
+            if (found_better) {             
+              best_score = u_score;
               temp_src = src_square;
               temp_dst = dst_square;
             }
@@ -204,7 +179,7 @@ int main () {
     board[best_dst] = board[best_src];
     board[best_src] = 0;
     side = 0x18 - side;
-    //PrintBoard(); getchar();
+    PrintBoard(); // getchar();
     if (score == abs(0x7F)) break;
   }
   PrintBoard();
