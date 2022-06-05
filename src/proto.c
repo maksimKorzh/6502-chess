@@ -42,18 +42,18 @@ uint8_t move_offsets[] = {
 
 uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00};
 uint8_t mat_score = 0x00, pos_score = 0x00;
-uint8_t mat_white = 0, mat_black = 0, pos_white = 0, pos_black = 0;
-uint8_t score;
-uint8_t best_src, best_dst;
+uint8_t mat_white = 0x00, mat_black = 0x00, pos_white = 0x00, pos_black = 0x00;
+uint8_t score = 0x00;
+uint8_t best_src = 0x00, best_dst = 0x00;
 uint8_t side = 0x08;
 
 uint8_t Search(uint8_t depth) {
-  uint8_t best_score = 0xFF, found_better = 0;
+  uint8_t best_score = 0xFF, found_better = 0x00;
   uint8_t temp_src = 0x00, temp_dst = 0x00;
   uint8_t src_square, dst_square, piece, type, captured_piece, directions, step_vector;
   
   if (depth == 0x00) {
-    mat_white = 0, mat_black = 0, pos_white = 0; pos_black = 0;
+    mat_white = 0x00, mat_black = 0x00, pos_white = 0x00; pos_black = 0x00;
     
     for(src_square = 0; src_square < 0x80; src_square++) {
       if(!(src_square & 0x88)) {
@@ -66,10 +66,10 @@ uint8_t Search(uint8_t depth) {
       }
     }
 
-    if ((mat_white - mat_black) >= 0) mat_score = mat_white - mat_black;
+    if ((mat_white - mat_black) >= 0x00) mat_score = mat_white - mat_black;
     else mat_score = (mat_black - mat_white) | 0x80;
     
-    if ((pos_white - pos_black) >= 0) pos_score = pos_white - pos_black;
+    if ((pos_white - pos_black) >= 0x00) pos_score = pos_white - pos_black;
     else pos_score = (pos_black - pos_white) | 0x80;
     
     if ((mat_score & 0x80) && (pos_score & 0x80)) {
@@ -119,10 +119,10 @@ uint8_t Search(uint8_t depth) {
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
-            if ((score & 0x80) == 0 && (best_score & 0x80) == 0) found_better = ((score & 0x7F) > (best_score & 0x7F)) ? 1 : 0;
-            else if ((score & 0x80) && (best_score & 0x80)) found_better = ((score & 0x7F) < (best_score & 0x7F)) ? 1 : 0;
-            else if ((score & 0x80) == 0 && (best_score & 0x80)) found_better = 1;
-            else if ((score & 0x80) && (best_score & 0x80) == 0) found_better = 0;
+            if ((score & 0x80) == 0x00 && (best_score & 0x80) == 0x00) found_better = ((score & 0x7F) > (best_score & 0x7F)) ? 0x01 : 0x00;
+            else if ((score & 0x80) && (best_score & 0x80)) found_better = ((score & 0x7F) < (best_score & 0x7F)) ? 0x01 : 0x00;
+            else if ((score & 0x80) == 0 && (best_score & 0x80)) found_better = 0x01;
+            else if ((score & 0x80) && (best_score & 0x80) == 0x00) found_better = 0x00;
             if (found_better) {             
               best_score = score;
               temp_src = src_square;
