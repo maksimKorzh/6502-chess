@@ -122,13 +122,21 @@ uint8_t Search(uint8_t depth) {
             //PrintBoard(); getchar();
             score = Search(depth - 0x01);
             u_score = score;
-            //printf("%d %d\n", score, u_score);
             
             
-            //if (score) printf("%d\n", score);
+            
+            // convert ot negative signed
             if (abs(score) & 0x80) score = -(abs(score) & 0x7F);
-            
+
             score = -score;
+            u_score = (u_score & 0x80) ? (u_score & 0x7F) : (u_score | 0x80);
+            
+            uint8_t compare_score =  u_score & 0x7F;
+            int sign = (u_score & 0x80) ? -(int)compare_score : compare_score;
+            
+            
+            
+            if (score != sign) printf("%d %d\n", score, sign);
 
             board[dst_square] = captured_piece;
             board[src_square] = piece;
@@ -191,7 +199,7 @@ int main () {
     board[best_dst] = board[best_src];
     board[best_src] = 0;
     side = 0x18 - side;
-    PrintBoard(); getchar();
+    //PrintBoard(); getchar();
     if (score == abs(0x7F)) break;
   }
   PrintBoard();
