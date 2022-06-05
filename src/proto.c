@@ -157,10 +157,13 @@ char *pieces[] = {
 	"-", "\u2659", "-", "\u2654", "\u2658", "\u2657", "\u2656", "\u2655"
 };
 
+//char pieces[] = ".-pknbrq-P-KNBRQ";
+
 void PrintBoard() {
     for(uint8_t sq = 0; sq < 128; sq++) {
       if(!(sq % 16)) printf(" %d  ", 8 - (sq / 16));
       printf(" %s", ((sq & 8) && (sq += 7)) ? "\n" : pieces[board[sq] & 15]);
+      //printf(" %c", ((sq & 8) && (sq += 7)) ? '\n' : pieces[board[sq] & 15]);
     } printf("\n     a b c d e f g h\n");
 }
 
@@ -172,6 +175,7 @@ void PrintBoard() {
  ==============================
 \******************************/
 
+// COMPILE: gcc proto.c -o proto
 int main () {
   PrintBoard();
   while(1) {
