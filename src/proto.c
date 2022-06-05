@@ -131,19 +131,24 @@ uint8_t Search(uint8_t depth) {
             score = -score;
             u_score = (u_score & 0x80) ? (u_score & 0x7F) : (u_score | 0x80);
             
-            uint8_t compare_score =  u_score & 0x7F;
-            int sign = (u_score & 0x80) ? -(int)compare_score : compare_score;
-            
-            
-            
-            if (score != sign) printf("%d %d\n", score, sign);
+            //uint8_t compare_score =  u_score & 0x7F;
+            //int sign = (u_score & 0x80) ? -(int)compare_score : compare_score;
+            //if (score != sign) printf("%d %d\n", score, sign);
 
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
             //PrintBoard(); getchar();
-                        
-            if ( score > ((best_score & 0x80) ? -(int)(best_score & 0x7F) : best_score) ) { 
+            
+            uint8_t better = 0;
+            
+            if ((u_score & 0x80) == 0 && (best_score & 0x80) == 0) better = ((u_score & 0x7F) > (best_score & 0x7F)) ? 1 : 0;//printf("both positive %X %X\n", u_score, best_score);
+            else if ((u_score & 0x80) && (best_score & 0x80)) better = ((u_score & 0x7F) < (best_score & 0x7F)) ? 1 : 0; //printf("both negatives %X %X\n", u_score, best_score);
+            else if ((u_score & 0x80) == 0 && (best_score & 0x80)) better = 1;//printf("score positive, best negative %X %X\n", u_score, best_score);
+            else if ((u_score & 0x80) && (best_score & 0x80) == 0) better = 0;//printf("score negative, best positive %X %X\n", u_score, best_score);
+            
+            if (better) {        
+            //if ( score > ((best_score & 0x80) ? -(int)(best_score & 0x7F) : best_score) ) { 
               best_score = (score < 0) ? (abs(score) | 0x80) : score;              
               temp_src = src_square;
               temp_dst = dst_square;
