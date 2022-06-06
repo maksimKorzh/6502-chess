@@ -88,7 +88,7 @@ uint8_t Search(uint8_t depth) {
     else if (pos_score & 0x80) {
       mat_score &= 0x7F;
       pos_score &= 0x7F;
-      if (mat_score >= pos_score) return (side == 0x08) ? (mat_score - pos_score) : (mat_score - pos_score) | 0x80;//eval = mat_score - pos_score;
+      if (mat_score >= pos_score) return (side == 0x08) ? (mat_score - pos_score) : (mat_score - pos_score) | 0x80;
       else return (side == 0x08) ? (pos_score - mat_score) | 0x80 : (pos_score - mat_score);
     }
 
