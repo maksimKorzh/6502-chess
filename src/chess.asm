@@ -39,79 +39,59 @@ SIDE: dcb $08                                              ; side to move
 ; PROGRAM: Upload at $0200
 START:
   CLD
-  LDA #$03
+  LDA #$03     ; search depth
   JSR SEARCH
+  LDA $01F2
   BRK
+  BRK
+
 SEARCH:
-  PHA          ; (SP + 12):  store DEPTH (not referenced)
+  PHA          ; (SP + 12):  store DEPTH
+  LDA #$00     ; init local variables with 0
+  PHA          ; (SP + 11):  init SRC_SQUARE
+  PHA          ; (SP + 10):  init DST_SQUARE
+  PHA          ; (SP + 9) :  init PIECE
+  PHA          ; (SP + 8) :  init TYPE
+  PHA          ; (SP + 7) :  init CAPTURED_PIECE
+  PHA          ; (SP + 6) :  init DIRECTIONS
+  PHA          ; (SP + 5) :  init STEP_VECTOR
+  PHA          ; (SP + 4) :  init TEMP_SRC
+  PHA          ; (SP + 3) :  init TEMP_DST
+  PHA          ; (SP + 2) :  init FOUND_BETTER
+  LDA #$FF     ; -INFINITY
+  PHA          ; (SP + 1) :  init BEST_SCORE
+
+  TSX
+  TXA
+  CLC
+  ADC #$0C
+  TAX
+  LDA $0100,X  ; get depth
+  CMP #$0      ; on leaf node
+  BEQ RETURN   ; evaluate position
+  SEC          ; make SBC work properly
+  SBC #$01     ; decrease depth by 1
+  JSR SEARCH   ; search recursively
   
-  
-  ;LDA #$FF     ; init best score as -infinity
-  PHA          ; (SP + 11):  init BEST SCORE
-  LDA #$00     ; init locals with 0
-  PHA          ; (SP + 10):  init FOUND BETTER MOVE
-  PHA          ; (SP + 9) :  init TEMP_SRC
-  PHA          ; (SP + 8) :  init TEMP_DST
-  PHA          ; (SP + 7) :  init SRC_SQUARE
-  
-  LDA #$DE
-  PHA          ; (SP + 6) :  init DST_SQUARE
-  PHA          ; (SP + 5) :  init PIECE
-  PHA          ; (SP + 4) :  init TYPE
-  
-  LDA #$AD
-  PHA          ; (SP + 3) :  init CAPTURED PIECE
-  
-  
-  PHA          ; (SP + 2) :  init DIRECTIONS
-  
-  LDA #$BE
-  PHA          ; (SP + 1) :  init STEP VECTOR
-  
-  
-  
-  DISPLAY:
   TSX
   INX
-  INX
-  INX
-  INX
-  INX
-  INX
-  LDA $0100,X
-  STA $FB
-  JSR $1F1F
-  JMP DISPLAY
-  
-  
-  
-  
-  PLA          ; (SP + 1):  free STEP VECTOR
-  PLA          ; (SP + 2):  free DIRECTIONS
-  PLA          ; (SP + 3):  free CAPTURED PIECE
-  PLA          ; (SP + 4):  free TYPE
-  PLA          ; (SP + 5):  free PIECE
-  PLA          ; (SP + 6):  free DST_SQUARE
-  PLA          ; (SP + 7):  free SRC_SQUARE
-  PLA          ; (SP + 8):  free TEMP_DEST
-  PLA          ; (SP + 9):  free TEMP_SRC
-  PLA          ; (SP + 10):  free FOUND BETTER MOVE
-  PLA          ; (SP + 11):  free BEST SCORE
-  PLA          ; restore DEPTH
-  CMP #$0
-  BEQ RETURN
-  SEC
-  SBC #$01
-  JSR SEARCH
+  LDA #$23     ; best score found
+  STA $0100,X  ; store best score
 
 RETURN:
+  PLA          ; (SP + 1):  free BEST_SCORE
+  PLA          ; (SP + 2):  free FOUND_BETTER
+  PLA          ; (SP + 3):  free TEMP_DST
+  PLA          ; (SP + 4):  free TEMP_SRC
+  PLA          ; (SP + 5):  free STEP_VECTOR
+  PLA          ; (SP + 6):  free DIRECTIONS
+  PLA          ; (SP + 7):  free CAPTURED_PIECE
+  PLA          ; (SP + 8):  free TYPE
+  PLA          ; (SP + 9):  free PIECE
+  PLA          ; (SP + 10): free DST_SQUARE
+  PLA          ; (SP + 11): free SRC_SQUARE
+  PLA          ; (SP + 12): free DEPTH
   RTS
 
-
-
-
-
-
-
-
-
+BREAK:
+  BRK
