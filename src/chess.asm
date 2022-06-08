@@ -25,29 +25,30 @@ BOARD:                                                   ; 0x88 cgess board + PS
   DCB $0E, $0C, $0D, $0F, $0B, $0D, $0C, $0E,   $00, $00, $00, $00, $00, $00, $00, $00
 
 OFFSETS:
-  DCB $00, $0F,  $10, $11, $00,                            ; white pawns
-  DCB $8F, $90,  $91, $00,                                 ; black pawns
-  DCB $01, $10,  $81, $90, $00,                            ; rooks
-  DCB $01, $10,  $81, $90, $0F, $8F, $11, $91,  $00,       ; queens, kings and bishops
-  DCB $0E, $8E,  $12, $92, $1F, $9F, $21, $A1,  $00,       ; knights
-  DCB $04, $00,  $0D, $16, $11, $08, $0D                   ; starting indexes
+  DCB $00, $0F,  $10, $11, $00,                            ; White pawns
+  DCB $8F, $90,  $91, $00,                                 ; Black pawns
+  DCB $01, $10,  $81, $90, $00,                            ; Rooks
+  DCB $01, $10,  $81, $90, $0F, $8F, $11, $91,  $00,       ; Queens, kings and bishops
+  DCB $0E, $8E,  $12, $92, $1F, $9F, $21, $A1,  $00,       ; Knights
+  DCB $04, $00,  $0D, $16, $11, $08, $0D                   ; Starting indexes
 
 WEIGHTS: DCB $00, $03, $03, $00, $09, $09, $0F, $1B, $00   ; .PP.NBRQK
-MSCORE: DCB $00                                            ; material score
-PSCORE: DCB $00                                            ; positional score
-MATW: DCB $00                                              ; material score white
-MATB: DCB $00                                              ; material score black
-POSW: DCB $00                                              ; positional score white
-POSB: DCB $00                                              ; positional score black
-SCORE: DCB $00                                             ; score returned by search
-BESTSRC: DCB $00                                           ; best from square
-BESTDST: DCB $00                                           ; best target square
-SIDE: DCB $08                                              ; side to move
+MSCORE: DCB $00                                            ; Material score
+PSCORE: DCB $00                                            ; Positional score
+MATW: DCB $00                                              ; Material score white
+MATB: DCB $00                                              ; Material score black
+POSW: DCB $00                                              ; Positional score white
+POSB: DCB $00                                              ; Positional score black
+SCORE: DCB $00                                             ; Score returned by search
+BESTSRC: DCB $00                                           ; Best from square
+BESTDST: DCB $00                                           ; Best target square
+SIDE: DCB $08                                              ; Side to move
+OFFBOARD: DCB $88                                          ; Offboard constant
 
 ;=================================
 ;  ($00BA-$01FF) Fake RAM bytes
 ;=================================
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $FF, $00, $00, $00, $00, $00, $00, $16, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
@@ -113,7 +114,13 @@ SEARCH:        ;-----------------------------
   STA $0100,X  ;-----------------------------
 
 SQ_LOOP:
-  ;BRK
+  BIT OFFBOARD
+  BNE NEXT_SQUARE
+  
+  ; now X = SRC_SQUARE, this is an offset
+  TAX
+  LDA #$AA
+  STA BOARD,X
   
   ;TSX          ;-----------------------------
   ;TXA          ;
@@ -124,16 +131,17 @@ SQ_LOOP:
   ;SEC          ;-----------------------------
   ;SBC #$01     ;     Search recursively
   ;JSR SEARCH   ;-----------------------------
-  
-  TSX
-  TXA
-  CLC
-  ADC #$0B
-  TAX
-  INC $0100,X
-  LDA $0100,X
-  CMP #$80
-  BNE SQ_LOOP
+
+NEXT_SQUARE:
+  TSX           ;-----------------------------
+  TXA           ;
+  CLC           ;
+  ADC #$0B      ;
+  TAX           ;
+  INC $0100,X   ;
+  LDA $0100,X   ;
+  CMP #$80      ;
+  BNE SQ_LOOP   ;----------------------------
 
 RETURN:
   TSX          ;-----------------------------
