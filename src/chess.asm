@@ -84,51 +84,52 @@ DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $31, $1F, $85, $1C
 ; --------------------------------
 
 START:
-  CLD          ;-----------------------------
-  LDA #$03     ;      Search position
-  JSR SEARCH   ;        with depth 3
-  BRK          ;-----------------------------
-  BRK          ;        Program ends
-  BRK          ;-----------------------------
+  CLD              ;-----------------------------
+  LDA #$03         ;      Search position
+  JSR SEARCH       ;        with depth 3
+  BRK              ;-----------------------------
+  BRK              ;        Program ends
+  BRK              ;-----------------------------
 
-SEARCH:        ;-----------------------------
-  PHA          ;     Store search depth
-  TSX          ;-----------------------------
-  TXA          ;
-  SEC          ;    Init local variables
-  SBC #$0A     ; (see stack map for details)
-  TAX          ;
-  TXS          ;-----------------------------
-  LDA #$FF     ;       Set BEST_SCORE
-  PHA          ;        to -INFINITY
-  TSX          ;-----------------------------
-  TXA          ;
-  CLC          ;      Get search depth
-  ADC #$0C     ; (see stack map for details)
-  TAX          ;
-  LDA $0100,X  ;-----------------------------
-  CMP #$0      ;        On leaf node
-  BEQ RETURN   ;     evaluate position
-  DEX          ;-----------------------------
-  LDA #$00     ;     Set SRC_SQUARE to 0
-  STA $0100,X  ;-----------------------------
+SEARCH:            ;-----------------------------
+  PHA              ;     Store search depth
+  TSX              ;-----------------------------
+  TXA              ;
+  SEC              ;    Init local variables
+  SBC #$0A         ; (see stack map for details)
+  TAX              ;
+  TXS              ;-----------------------------
+  LDA #$FF         ;       Set BEST_SCORE
+  PHA              ;        to -INFINITY
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;      Get search depth
+  ADC #$0C         ; (see stack map for details)
+  TAX              ;
+  LDA $0100,X      ;-----------------------------
+  CMP #$0          ;        On leaf node
+  BEQ RETURN       ;     evaluate position
+  DEX              ;-----------------------------
+  LDA #$00         ;     Set SRC_SQUARE to 0
+  STA $0100,X      ;-----------------------------
 
-SQ_LOOP:
-  BIT OFFBOARD
-  BNE NEXT_SQUARE
-  
-  TAY ; Y = square
-  LDA BOARD,Y
-  DEX
-  DEX
-  STA $0100,X
-  BIT SIDE
-  BEQ NEXT_SQUARE
+SQ_LOOP:           ;-----------------------------
+  BIT OFFBOARD     ;    Skip offboard squares
+  BNE NEXT_SQUARE  ;-----------------------------
+  TAY              ;  Get piece at board square
+  LDA BOARD,Y      ;-----------------------------
+  DEX              ;  Adjust X offset to piece
+  DEX              ;-----------------------------
+  STA $0100,X      ;         Store piece,
+  BIT SIDE         ;     Skip if wrong color
+  BEQ NEXT_SQUARE  ;-----------------------------
+  AND #$07         ;     Extract piece type
+  DEX              ;        and store it
+  STA $0100,X      ;-----------------------------
   
   LDA #$AA
   STA BOARD,Y
-  
-  
+    
   ;TSX          ;-----------------------------
   ;TXA          ;
   ;CLC          ;      Get search depth
