@@ -133,9 +133,20 @@ SQ_LOOP:           ;-----------------------------
   DEX              ;  starting index to loop over
   DEX              ;
   STA $0100,X      ;-----------------------------
-  BRK
 
-  
+OFFSET_LOOP:
+  ;BRK
+  TSX
+  TXA
+  CLC
+  ADC #$06
+  TAX
+  INC $0100,X
+  LDA $0100,X
+  TAY
+  LDA OFFSETS,Y
+  DEX
+  STA $0100,X
   
   ;TSX          ;-----------------------------
   ;TXA          ;
@@ -146,6 +157,15 @@ SQ_LOOP:           ;-----------------------------
   ;SEC          ;-----------------------------
   ;SBC #$01     ;     Search recursively
   ;JSR SEARCH   ;-----------------------------
+
+  TSX
+  TXA
+  CLC
+  ADC #$05
+  TAX
+  LDA $0100,X
+  CMP #$00
+  BNE OFFSET_LOOP
 
 NEXT_SQUARE:
   TSX           ;-----------------------------
@@ -169,10 +189,3 @@ RETURN:
 
 BREAK:
   BRK
-  
-  ;TAY
-  ;INY
-  ;LDA OFFSETS,Y
-  ;DEX
-  ;STA $0100,X
-  ;BRK
