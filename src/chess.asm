@@ -117,10 +117,17 @@ SQ_LOOP:
   BIT OFFBOARD
   BNE NEXT_SQUARE
   
-  ; now X = SRC_SQUARE, this is an offset
-  TAX
+  TAY ; Y = square
+  LDA BOARD,Y
+  DEX
+  DEX
+  STA $0100,X
+  BIT SIDE
+  BEQ NEXT_SQUARE
+  
   LDA #$AA
-  STA BOARD,X
+  STA BOARD,Y
+  
   
   ;TSX          ;-----------------------------
   ;TXA          ;
