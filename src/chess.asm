@@ -1,11 +1,13 @@
-;==============================;
+;=================================
 ;
-;  6502 chess program for KIM-1
-;       (prototype in C) 
+;  6502 chess program for KIM-1 
 ;
-;==============================;
+;=================================
 
-; VARIABLES: Upload at $0000
+; ================================
+;    VARIABLES: Upload at $0000
+; ================================
+
 BOARD:                                                   ; 0x88 cgess board + PST
   dcb $16, $14, $15, $17, $13, $15, $14, $16,   $00, $00, $00, $00, $00, $00, $00, $00,
   dcb $12, $12, $12, $12, $12, $12, $12, $12,   $00, $00, $00, $00, $00, $00, $00, $00,
@@ -36,62 +38,64 @@ BESTSRC: dcb $00                                           ; best from square
 BESTDST: dcb $00                                           ; best target square
 SIDE: dcb $08                                              ; side to move
 
-; PROGRAM: Upload at $0200
+; ================================
+;    PROGRAM: Upload at $0200
+; ================================
+; --------------------------------
+;            STACK MAP
+; --------------------------------
+; (SP + 12): DEPTH
+; (SP + 11): SRC_SQUARE
+; (SP + 10): DST_SQUARE
+; (SP + 9) : PIECE
+; (SP + 8) : TYPE
+; (SP + 7) : CAPTURED_PIECE
+; (SP + 6) : DIRECTIONS
+; (SP + 5) : STEP_VECTOR
+; (SP + 4) : TEMP_SRC
+; (SP + 3) : TEMP_DST
+; (SP + 2) : FOUND_BETTER
+; (SP + 1) : BEST_SCORE
+; --------------------------------
+
 START:
-  CLD
-  LDA #$03     ; search depth
-  JSR SEARCH
-  LDA $01F2
-  BRK
-  BRK
+  CLD          ;-----------------------------
+  LDA #$03     ;      Search position
+  JSR SEARCH   ;        with depth 3
+  BRK          ;-----------------------------
+  BRK          ;        Program ends
+  BRK          ;-----------------------------
 
-SEARCH:
-  PHA          ; (SP + 12):  store DEPTH
-  LDA #$00     ; init local variables with 0
-  PHA          ; (SP + 11):  init SRC_SQUARE
-  PHA          ; (SP + 10):  init DST_SQUARE
-  PHA          ; (SP + 9) :  init PIECE
-  PHA          ; (SP + 8) :  init TYPE
-  PHA          ; (SP + 7) :  init CAPTURED_PIECE
-  PHA          ; (SP + 6) :  init DIRECTIONS
-  PHA          ; (SP + 5) :  init STEP_VECTOR
-  PHA          ; (SP + 4) :  init TEMP_SRC
-  PHA          ; (SP + 3) :  init TEMP_DST
-  PHA          ; (SP + 2) :  init FOUND_BETTER
-  LDA #$FF     ; -INFINITY
-  PHA          ; (SP + 1) :  init BEST_SCORE
-
-  TSX
-  TXA
-  CLC
-  ADC #$0C
-  TAX
-  LDA $0100,X  ; get depth
-  CMP #$0      ; on leaf node
-  BEQ RETURN   ; evaluate position
-  SEC          ; make SBC work properly
-  SBC #$01     ; decrease depth by 1
-  JSR SEARCH   ; search recursively
-  
-  TSX
-  INX
-  LDA #$23     ; best score found
-  STA $0100,X  ; store best score
+SEARCH:        ;-----------------------------
+  PHA          ;     store search depth
+  TSX          ;-----------------------------
+  TXA          ;
+  SEC          ;    init local variables
+  SBC #$0A     ; (see stack map for details)
+  TAX          ;
+  TXS          ;-----------------------------
+  LDA #$FF     ;       init BEST_SCORE
+  PHA          ;         to -INFINITY
+  TSX          ;-----------------------------
+  TXA          ;
+  CLC          ;      get search depth
+  ADC #$0C     ; (see stack map for details)
+  TAX          ;
+  LDA $0100,X  ;-----------------------------
+  CMP #$0      ;        on leaf node
+  BEQ RETURN   ;     evaluate position
+  SEC          ;-----------------------------
+  SBC #$01     ;     search recursively
+  JSR SEARCH   ;-----------------------------
 
 RETURN:
-  PLA          ; (SP + 1):  free BEST_SCORE
-  PLA          ; (SP + 2):  free FOUND_BETTER
-  PLA          ; (SP + 3):  free TEMP_DST
-  PLA          ; (SP + 4):  free TEMP_SRC
-  PLA          ; (SP + 5):  free STEP_VECTOR
-  PLA          ; (SP + 6):  free DIRECTIONS
-  PLA          ; (SP + 7):  free CAPTURED_PIECE
-  PLA          ; (SP + 8):  free TYPE
-  PLA          ; (SP + 9):  free PIECE
-  PLA          ; (SP + 10): free DST_SQUARE
-  PLA          ; (SP + 11): free SRC_SQUARE
-  PLA          ; (SP + 12): free DEPTH
-  RTS
+  TSX          ;-----------------------------
+  TXA          ;
+  CLC          ;    free local variables
+  ADC #$0C     ; (see stack map for details)
+  TAX          ;          and return
+  TXS          ;
+  RTS          ;-----------------------------
 
 BREAK:
   BRK
