@@ -44,9 +44,9 @@ SIDE: dcb $08                                              ; side to move
 ; --------------------------------
 ;            STACK MAP
 ; --------------------------------
-; (SP + 12): DEPTH
-; (SP + 11): SRC_SQUARE
-; (SP + 10): DST_SQUARE
+; (SP + C): DEPTH
+; (SP + B): SRC_SQUARE
+; (SP + A): DST_SQUARE
 ; (SP + 9) : PIECE
 ; (SP + 8) : TYPE
 ; (SP + 7) : CAPTURED_PIECE
@@ -67,31 +67,54 @@ START:
   BRK          ;-----------------------------
 
 SEARCH:        ;-----------------------------
-  PHA          ;     store search depth
+  PHA          ;     Store search depth
   TSX          ;-----------------------------
   TXA          ;
-  SEC          ;    init local variables
+  SEC          ;    Init local variables
   SBC #$0A     ; (see stack map for details)
   TAX          ;
   TXS          ;-----------------------------
-  LDA #$FF     ;       init BEST_SCORE
-  PHA          ;         to -INFINITY
+  LDA #$FF     ;       Set BEST_SCORE
+  PHA          ;        to -INFINITY
   TSX          ;-----------------------------
   TXA          ;
-  CLC          ;      get search depth
+  CLC          ;      Get search depth
   ADC #$0C     ; (see stack map for details)
   TAX          ;
   LDA $0100,X  ;-----------------------------
-  CMP #$0      ;        on leaf node
+  CMP #$0      ;        On leaf node
   BEQ RETURN   ;     evaluate position
-  SEC          ;-----------------------------
-  SBC #$01     ;     search recursively
-  JSR SEARCH   ;-----------------------------
+  DEX          ;-----------------------------
+  LDA #$00     ;     Set SRC_SQUARE to 0
+  STA $0100,X  ;-----------------------------
+
+SQ_LOOP:
+  ;BRK
+  
+  ;TSX          ;-----------------------------
+  ;TXA          ;
+  ;CLC          ;      Get search depth
+  ;ADC #$0C     ; (see stack map for details)
+  ;TAX          ;
+  ;LDA $0100,X  ;
+  ;SEC          ;-----------------------------
+  ;SBC #$01     ;     Search recursively
+  ;JSR SEARCH   ;-----------------------------
+  
+  TSX
+  TXA
+  CLC
+  ADC #$0B
+  TAX
+  INC $0100,X
+  LDA $0100,X
+  CMP #$80
+  BNE SQ_LOOP
 
 RETURN:
   TSX          ;-----------------------------
   TXA          ;
-  CLC          ;    free local variables
+  CLC          ;   Free up local variables
   ADC #$0C     ; (see stack map for details)
   TAX          ;          and return
   TXS          ;
