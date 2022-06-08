@@ -116,12 +116,12 @@ SEARCH:            ;-----------------------------
 SQ_LOOP:           ;-----------------------------
   BIT OFFBOARD     ;    Skip offboard squares
   BNE NEXT_SQUARE  ;-----------------------------
-  TAY              ;  Get piece at board square
-  LDA BOARD,Y      ;-----------------------------
-  DEX              ;  Adjust X offset to piece
-  DEX              ;-----------------------------
-  STA $0100,X      ;         Store piece,
-  BIT SIDE         ;     Skip if wrong color
+  TAY              ;  
+  LDA BOARD,Y      ;  Get piece at board square
+  DEX              ;   and store it, skip if
+  DEX              ;         wrong color
+  STA $0100,X      ;         
+  BIT SIDE         ;
   BEQ NEXT_SQUARE  ;-----------------------------
   AND #$07         ;     Extract piece type
   DEX              ;        and store it
@@ -136,17 +136,17 @@ SQ_LOOP:           ;-----------------------------
 
 OFFSET_LOOP:
   ;BRK
-  TSX
-  TXA
-  CLC
-  ADC #$06
-  TAX
-  INC $0100,X
-  LDA $0100,X
-  TAY
-  LDA OFFSETS,Y
-  DEX
-  STA $0100,X
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;   Extract direction offset
+  ADC #$06         ;       starting index
+  TAX              ;      and increment it
+  INC $0100,X      ;-----------------------------
+  LDA $0100,X      ;
+  TAY              ;   Get next step vector of
+  LDA OFFSETS,Y    ;   the offset and store it
+  DEX              ;
+  STA $0100,X      ;-----------------------------
   
   ;TSX          ;-----------------------------
   ;TXA          ;
