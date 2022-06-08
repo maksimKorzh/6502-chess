@@ -126,10 +126,17 @@ SQ_LOOP:           ;-----------------------------
   AND #$07         ;     Extract piece type
   DEX              ;        and store it
   STA $0100,X      ;-----------------------------
+  CLC              ;
+  ADC #$1F         ;      Extract and store
+  TAY              ;   directions offset for a 
+  LDA OFFSETS,Y    ;    piece type to use as a
+  DEX              ;  starting index to loop over
+  DEX              ;
+  STA $0100,X      ;-----------------------------
+  BRK
+
   
-  LDA #$AA
-  STA BOARD,Y
-    
+  
   ;TSX          ;-----------------------------
   ;TXA          ;
   ;CLC          ;      Get search depth
@@ -162,3 +169,10 @@ RETURN:
 
 BREAK:
   BRK
+  
+  ;TAY
+  ;INY
+  ;LDA OFFSETS,Y
+  ;DEX
+  ;STA $0100,X
+  ;BRK
