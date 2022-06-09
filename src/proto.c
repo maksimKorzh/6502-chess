@@ -33,10 +33,10 @@ uint8_t board[128] = {
 
 uint8_t move_offsets[] = {
    0x00, 0x0F,  0x10, 0x11, 0x00,                             // black pawns
-   0x8F, 0x90,  0x91, 0x00,                                   // white pawns
-   0x01, 0x10,  0x81, 0x90, 0x00,                             // rooks
-   0x01, 0x10,  0x81, 0x90, 0x0F, 0x8F, 0x11, 0x91,  0x00,    // queens, kings and bishops
-   0x0E, 0x8E,  0x12, 0x92, 0x1F, 0x9F, 0x21, 0xA1,  0x00,    // knights
+   0xF1, 0xF0,  0xEF, 0x00,                                   // white pawns
+   0x01, 0x10,  0xFF, 0xF0, 0x00,                             // rooks
+   0x01, 0x10,  0xFF, 0xF0, 0x0F, 0xF1, 0x11, 0xEF,  0x00,    // queens, kings and bishops
+   0x0E, 0xF2,  0x12, 0xEE, 0x1F, 0xE1, 0x21, 0xDF,  0x00,    // knights
    0x04, 0x00,  0x0D, 0x16, 0x11, 0x08, 0x0D                  // starting indexes
 };
 
@@ -103,9 +103,8 @@ uint8_t Search(uint8_t depth) {
         directions = move_offsets[type + 0x1F];
         while(step_vector = move_offsets[++directions]) {
           dst_square = src_square;
-          do {
-            if (step_vector & 0x80) dst_square -= (step_vector & 0x7F);
-            else dst_square += (step_vector & 0x7F);
+          do {            
+            dst_square += step_vector;
             if(dst_square & 0x88) break;
             captured_piece = board[dst_square];
             if(captured_piece & side) break;
@@ -114,11 +113,13 @@ uint8_t Search(uint8_t depth) {
             board[dst_square] = piece;
             board[src_square] = 0x00;
             side = 0x18 - side;
+            //PrintBoard(); getchar();
             score = Search(depth - 0x01);
             score = (score & 0x80) ? (score & 0x7F) : (score | 0x80);
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
+            //PrintBoard(); getchar();
             if ((score & 0x80) == 0x00 && (best_score & 0x80) == 0x00) found_better = ((score & 0x7F) > (best_score & 0x7F)) ? 0x01 : 0x00;
             else if ((score & 0x80) && (best_score & 0x80)) found_better = ((score & 0x7F) < (best_score & 0x7F)) ? 0x01 : 0x00;
             else if ((score & 0x80) == 0x00 && (best_score & 0x80)) found_better = 0x01;
@@ -177,6 +178,9 @@ void PrintBoard() {
 
 // COMPILE: gcc proto.c -o proto
 int main () {
+  uint8_t x = 0x10;
+  uint8_t z = 0;
+  printf("%X\n", z -= x);
   PrintBoard();
   while(1) {
     uint8_t score = Search(0x03);

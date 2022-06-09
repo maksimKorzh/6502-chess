@@ -163,45 +163,45 @@ OFFSET_LOOP:
   STA $0100,X      ;-----------------------------
 
 SLIDE_LOOP:
-  TSX
-  TXA
-  CLC
-  ADC #$05
-  TAX
-  LDA $0100,X      ; load step vector
-  CMP #$00
-  BEQ NEXT_SQUARE
-  INX
-  INX
-  INX
-  INX
-  INX
-  STA $0100,X ; store step vectore to dst
-  
-  BIT NEGATIVE
-  BNE SUB_OFFSET
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;       Load step vector,
+  ADC #$05         ;    go to next square if no
+  TAX              ;  more direction offsets left
+  LDA $0100,X      ;
+  CMP #$00         ;  
+  BEQ NEXT_SQUARE  ;-----------------------------
+  INX              ;
+  INX              ;     Store step vectore
+  INX              ;     to the DST_SQUARE
+  INX              ;
+  INX              ;
+  STA $0100,X      ;-----------------------------
+  BIT NEGATIVE     ;        ADD/SUB offset 
+  BNE SUB_OFFSET   ;-----------------------------
 
 ADD_OFFSET:
-  INX
-  LDA $0100,X ; load src
-  DEX
-  CLC
-  ADC $0100,X
-  JMP CONDITIONS
+  INX              ;-----------------------------
+  LDA $0100,X      ;
+  DEX              ;   Calculate target square
+  CLC              ;
+  ADC $0100,X      ;
+  JMP CONDITIONS   ;-----------------------------
 
 SUB_OFFSET:
-  AND #$7F
-  STA $0100,X
-  INX
-  LDA $0100,X ; load src
-  DEX
-  SEC
-  SBC $0100,X
+  AND #$7F         ;-----------------------------
+  STA $0100,X      ;
+  INX              ;
+  LDA $0100,X      ;   Calculate target square
+  DEX              ;
+  SEC              ;
+  SBC $0100,X      ;-----------------------------
 
 
-CONDITIONS:
-  STA $0100,X      ; set target square
-  
+CONDITIONS:        ;----------------------------
+  STA $0100,X      ;     Set target square
+
+DEBUG:
   LDA $0100,X
   TAY
   LDA #$01
