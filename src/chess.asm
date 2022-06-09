@@ -161,33 +161,31 @@ OFFSET_LOOP:
   LDA OFFSETS,Y    ;   the offset and store it
   DEX              ;
   STA $0100,X      ;-----------------------------
-  CMP #$00
-  BEQ NEXT_SQUARE
-  TXA
-  CLC
-  ADC #$06
-  TAX
-  LDA $0100,X      ;-----------------------------
-  DEX              ;   DST_SQUARE = SRC_SQUARE
+  CMP #$00         ;  Break if no more offsets
+  BEQ NEXT_SQUARE  ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$06         ;       Set up DST_SQAURE
+  TAX              ;      equal to SRC_SQUARE
+  LDA $0100,X      ;
+  DEX              ;
   STA $0100,X      ;-----------------------------
   
 SLIDE_LOOP:
-  TSX
-  TXA
-  CLC
-  ADC #$05
-  TAX
-  LDY $0100,X      ; load step vector
-  
-  TXA
-  CLC
-  ADC #$05
-  TAX
-  TYA
-  CLC
-  ADC $0100,X
-  STA $0100,X     ; update target square
-  ;BRK
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;      Load step vector
+  ADC #$05         ;
+  TAX              ;
+  LDY $0100,X      ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$05         ;     Update DST_SQAURE by
+  TAX              ;     adding the value of
+  TYA              ;       STEP_VECTOR to it
+  CLC              ;
+  ADC $0100,X      ;
+  STA $0100,X      ;----------------------------- 
 
 DEBUG:
   LDA $0100,X
@@ -206,7 +204,6 @@ DEBUG:
   ;SBC #$01     ;     Search recursively
   ;JSR SEARCH   ;-----------------------------
 
-NEXT_OFFSET:
   JMP OFFSET_LOOP
 
 NEXT_SQUARE:
