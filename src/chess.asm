@@ -103,6 +103,9 @@ START:
   BRK              ;        Program ends
   BRK              ;-----------------------------
 
+EVALUATE:
+  JMP RETURN
+
 SEARCH:            ;-----------------------------
   PHA              ;     Store search depth
   TSX              ;-----------------------------
@@ -120,7 +123,7 @@ SEARCH:            ;-----------------------------
   TAX              ;
   LDA $0100,X      ;-----------------------------
   CMP #$0          ;        On leaf node
-  BEQ RETURN       ;     evaluate position
+  BEQ EVALUATE     ;     evaluate position
   DEX              ;-----------------------------
   LDA #$00         ;     Set SRC_SQUARE to 0
   STA $0100,X      ;-----------------------------
@@ -147,7 +150,6 @@ SQ_LOOP:           ;-----------------------------
   STA $0100,X      ;-----------------------------
 
 OFFSET_LOOP:
-  ;BRK
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;   Extract direction offset
@@ -162,25 +164,36 @@ OFFSET_LOOP:
 
 SLIDE_LOOP:
   BIT NEGATIVE
-  BEQ SUB_OFFSET
+  BNE SUB_OFFSET
 
 ADD_OFFSET:
-  ;AND #$7F
-  TAY
+  TSX
   TXA
   CLC
   ADC #$05
   TAX
-  TYA
+  LDA $0100,X      ; load step vector
+  CMP #$00
+  BEQ NEXT_SQUARE
+  INX
+  INX
+  INX
+  INX
+  INX
+  STA $0100,X
+  INX
+  LDA $0100,X
+  DEX
   CLC
   ADC $0100,X
-  STA $0100,X
+  STA $0100,X      ; set target square
   
+  LDA $0100,X
   TAY
   LDA #$AA
   STA BOARD,Y
-  ;BRK
-
+  BRK
+  
 SUB_OFFSET:
 
   ;TSX          ;-----------------------------
@@ -193,14 +206,15 @@ SUB_OFFSET:
   ;SBC #$01     ;     Search recursively
   ;JSR SEARCH   ;-----------------------------
 
-  TSX
-  TXA
-  CLC
-  ADC #$05
-  TAX
-  LDA $0100,X
-  CMP #$00
-  BNE OFFSET_LOOP
+  ;TSX
+  ;TXA
+  ;CLC
+  ;ADC #$05
+  ;TAX
+  ;LDA $0100,X
+  ;CMP #$00
+  ;BNE OFFSET_LOOP
+  JMP OFFSET_LOOP
 
 NEXT_SQUARE:
   TSX           ;-----------------------------
@@ -209,12 +223,13 @@ NEXT_SQUARE:
   ADC #$0B      ;
   TAX           ;
   INC $0100,X   ; inc SRC_SQUARE
-  DEX
-  INC $0100,X   ; inc DST_SQUARE
-  INX
   LDA $0100,X   ; 
   CMP #$80      ;
-  BNE SQ_LOOP   ;----------------------------
+  BNE REP_SQ    ;----------------------------
+  BEQ RETURN
+
+REP_SQ:
+  JMP SQ_LOOP
 
 RETURN:
   TSX          ;-----------------------------
