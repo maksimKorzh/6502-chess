@@ -36,12 +36,12 @@ BOARD:                                                   ; 0x88 cgess board + PS
 
 
 OFFSETS:
-  DCB $00, $0F,  $10, $11, $00,                            ; Black pawns
-  DCB $8F, $90,  $91, $00,                                 ; White pawns
-  DCB $01, $10,  $81, $90, $00,                            ; Rooks
-  DCB $01, $10,  $81, $90, $0F, $8F, $11, $91,  $00,       ; Queens, kings and bishops
-  DCB $0E, $8E,  $12, $92, $1F, $9F, $21, $A1,  $00,       ; Knights
-  DCB $04, $00,  $0D, $16, $11, $08, $0D                   ; Starting indexes
+  DCB $00, $0F,  $10, $11, $00,                            ; black pawns
+  DCB $F1, $F0,  $EF, $00,                                 ; white pawns
+  DCB $01, $10,  $FF, $F0, $00,                            ; rooks
+  DCB $01, $10,  $FF, $F0, $0F, $F1, $11, $EF,  $00,       ; queens, kings and bishops
+  DCB $0E, $F2,  $12, $EE, $1F, $E1, $21, $DF,  $00,       ; knights
+  DCB $04, $00,  $0D, $16, $11, $08, $0D                   ; starting indexes
 
 WEIGHTS: DCB $00, $03, $03, $00, $09, $09, $0F, $1B, $00   ; .PP.NBRQK
 MSCORE: DCB $00                                            ; Material score
@@ -177,25 +177,11 @@ SLIDE_LOOP:
   INX              ;
   INX              ;
   STA $0100,X      ;-----------------------------
-  BIT NEGATIVE     ;        ADD/SUB offset 
-  BNE SUB_OFFSET   ;-----------------------------
-
-ADD_OFFSET:
   INX              ;-----------------------------
   LDA $0100,X      ;
   DEX              ;   Calculate target square
   CLC              ;
   ADC $0100,X      ;
-  JMP CONDITIONS   ;-----------------------------
-
-SUB_OFFSET:
-  AND #$7F         ;-----------------------------
-  STA $0100,X      ;
-  INX              ;
-  LDA $0100,X      ;   Calculate target square
-  DEX              ;
-  SEC              ;
-  SBC $0100,X      ;-----------------------------
 
 
 CONDITIONS:        ;----------------------------
