@@ -28,8 +28,8 @@ BOARD:                                                   ; 0x88 cgess board + PS
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
-  DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
-  DCB $00, $00, $00, $0E, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
+  DCB $00, $00, $00, $12, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
+  DCB $00, $00, $00, $0E, $00, $12, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00
@@ -130,14 +130,14 @@ SEARCH:            ;-----------------------------
 
 SQ_LOOP:           ;-----------------------------
   BIT OFFBOARD     ;    Skip offboard squares
-  BNE NEXT_SQUARE  ;-----------------------------
+  BNE BRIDGE       ;-----------------------------
   TAY              ;  
   LDA BOARD,Y      ;  Get piece at board square
   DEX              ;   and store it, skip if
   DEX              ;         wrong color
   STA $0100,X      ;         
   BIT SIDE         ;
-  BEQ NEXT_SQUARE  ;-----------------------------
+  BEQ BRIDGE       ;-----------------------------
   AND #$07         ;     Extract piece type
   DEX              ;        and store it
   STA $0100,X      ;-----------------------------
@@ -170,7 +170,11 @@ OFFSET_LOOP:
   LDA $0100,X      ;
   DEX              ;
   STA $0100,X      ;-----------------------------
+  JMP SLIDE_LOOP
   
+BRIDGE:
+  JMP NEXT_SQUARE
+
 SLIDE_LOOP:
   TSX              ;-----------------------------
   TXA              ;
@@ -188,38 +192,54 @@ SLIDE_LOOP:
   STA $0100,X      ;-----------------------------
   BIT OFFBOARD     ; Break if hit the board edge
   BNE NEXT_OFFSET  ;-----------------------------
-
-DEBUG:
-  LDA $0100,X
-  TAY
+  TAY              ;
+  TSX              ;
+  TXA              ;
+  CLC              ;  Store CAPTURED_PIECE from
+  ADC #$07         ;      BOARD[DST_SQUARE]
+  TAX              ;
+  TYA              ;
+  LDA BOARD,Y      ;
+  STA $0100,X      ;-----------------------------
+  
+  ;---------------------------------------------
   LDA #$01
-  STA BOARD,Y
+  STA BOARD,Y      ; DEBUG
+  ;---------------------------------------------
 
-  ;TSX          ;-----------------------------
-  ;TXA          ;
-  ;CLC          ;      Get search depth
-  ;ADC #$0C     ; (see stack map for details)
-  ;TAX          ;
-  ;LDA $0100,X  ;
-  ;SEC          ;-----------------------------
-  ;SBC #$01     ;     Search recursively
-  ;JSR SEARCH   ;-----------------------------
+  ;TSX             ;-----------------------------
+  ;TXA             ;
+  ;CLC             ;      Get search depth
+  ;ADC #$0C        ; (see stack map for details)
+  ;TAX             ;
+  ;LDA $0100,X     ;
+  ;SEC             ;-----------------------------
+  ;SBC #$01        ;     Search recursively
+  ;JSR SEARCH      ;-----------------------------
 
-  JMP SLIDE_LOOP
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$07         ;
+  TAX              ;  Stop sliding on capture
+  LDA $0100,X      ;
+  CMP #$00         ;
+  BNE NEXT_OFFSET  ;
+  JMP SLIDE_LOOP   ;-----------------------------
 
 NEXT_OFFSET:
   JMP OFFSET_LOOP
 
 NEXT_SQUARE:
-  TSX           ;-----------------------------
-  TXA           ;
-  CLC           ;
-  ADC #$0B      ;
-  TAX           ;
-  INC $0100,X   ; inc SRC_SQUARE
-  LDA $0100,X   ; 
-  CMP #$80      ;
-  BNE REP_SQ    ;----------------------------
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$0B         ;
+  TAX              ;
+  INC $0100,X      ; inc SRC_SQUARE
+  LDA $0100,X      ; 
+  CMP #$80         ;
+  BNE REP_SQ       ;----------------------------
   BEQ RETURN
 
 REP_SQ:
