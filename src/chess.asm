@@ -29,7 +29,7 @@ BOARD:                                                   ; 0x88 cgess board + PS
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
-  DCB $00, $00, $00, $09, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
+  DCB $00, $00, $00, $0C, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00
@@ -161,31 +161,33 @@ OFFSET_LOOP:
   LDA OFFSETS,Y    ;   the offset and store it
   DEX              ;
   STA $0100,X      ;-----------------------------
-
-SLIDE_LOOP:
-  TSX              ;-----------------------------
-  TXA              ;
-  CLC              ;       Load step vector,
-  ADC #$05         ;    go to next square if no
-  TAX              ;  more direction offsets left
-  LDA $0100,X      ;
-  CMP #$00         ;  
-  BEQ NEXT_SQUARE  ;-----------------------------
-  INX              ;
-  INX              ;     Store step vectore
-  INX              ;     to the DST_SQUARE
-  INX              ;
-  INX              ;
+  CMP #$00
+  BEQ NEXT_SQUARE
+  TXA
+  CLC
+  ADC #$06
+  TAX
+  LDA $0100,X      ;-----------------------------
+  DEX              ;   DST_SQUARE = SRC_SQUARE
   STA $0100,X      ;-----------------------------
-  INX              ;-----------------------------
-  LDA $0100,X      ;
-  DEX              ;   Calculate target square
-  CLC              ;
-  ADC $0100,X      ;
-
-
-CONDITIONS:        ;----------------------------
-  STA $0100,X      ;     Set target square
+  
+SLIDE_LOOP:
+  TSX
+  TXA
+  CLC
+  ADC #$05
+  TAX
+  LDY $0100,X      ; load step vector
+  
+  TXA
+  CLC
+  ADC #$05
+  TAX
+  TYA
+  CLC
+  ADC $0100,X
+  STA $0100,X     ; update target square
+  ;BRK
 
 DEBUG:
   LDA $0100,X
