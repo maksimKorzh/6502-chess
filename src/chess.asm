@@ -163,10 +163,6 @@ OFFSET_LOOP:
   STA $0100,X      ;-----------------------------
 
 SLIDE_LOOP:
-  BIT NEGATIVE
-  BNE SUB_OFFSET
-
-ADD_OFFSET:
   TSX
   TXA
   CLC
@@ -180,21 +176,37 @@ ADD_OFFSET:
   INX
   INX
   INX
-  STA $0100,X
+  STA $0100,X ; store step vectore to dst
+  
+  BIT NEGATIVE
+  BNE SUB_OFFSET
+
+ADD_OFFSET:
   INX
-  LDA $0100,X
+  LDA $0100,X ; load src
   DEX
   CLC
   ADC $0100,X
+  JMP CONDITIONS
+
+SUB_OFFSET:
+  AND #$7F
+  STA $0100,X
+  INX
+  LDA $0100,X ; load src
+  DEX
+  SEC
+  SBC $0100,X
+
+
+CONDITIONS:
   STA $0100,X      ; set target square
   
   LDA $0100,X
   TAY
-  LDA #$AA
+  LDA #$01
   STA BOARD,Y
-  BRK
-  
-SUB_OFFSET:
+  ;BRK
 
   ;TSX          ;-----------------------------
   ;TXA          ;
@@ -206,14 +218,6 @@ SUB_OFFSET:
   ;SBC #$01     ;     Search recursively
   ;JSR SEARCH   ;-----------------------------
 
-  ;TSX
-  ;TXA
-  ;CLC
-  ;ADC #$05
-  ;TAX
-  ;LDA $0100,X
-  ;CMP #$00
-  ;BNE OFFSET_LOOP
   JMP OFFSET_LOOP
 
 NEXT_SQUARE:
