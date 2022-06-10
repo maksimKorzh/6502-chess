@@ -28,8 +28,8 @@ BOARD:                                                   ; 0x88 cgess board + PS
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
-  DCB $00, $00, $13, $00, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
-  DCB $00, $00, $00, $09, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
+  DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
+  DCB $00, $00, $00, $0C, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00
@@ -282,17 +282,20 @@ MAKE_MOVE:
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;
-  ADC #$07         ;
-  TAX              ;  Stop sliding on capture
+  ADC #$07         ;   Stop sliding on capture
+  TAX              ;
   LDA $0100,X      ;
-  
   TAY              ;-----------------------------
   INX              ;
-  LDA $0100,X      ;      Skip sliding for
-  SEC              ;       leaper pieces
+  LDA $0100,X      ;   Handle double pawn pushes   
+  SEC              ;
+  CMP #$03         ;
+  BCC IS_DOUBLE    ;-----------------------------
+  SEC              ;   Skip sliding for leapers   
   CMP #$05         ;
   BCC NEXT_OFFSET  ;-----------------------------
-  
+
+END_SLIDE:
   TYA
   CMP #$00         ;
   BNE NEXT_OFFSET  ;
@@ -300,6 +303,25 @@ MAKE_MOVE:
 
 NEXT_OFFSET:
   JMP OFFSET_LOOP
+
+IS_DOUBLE:
+  TSX
+  TXA
+  CLC
+  ADC #$0A
+  TAX
+  LDA $0100,X
+  AND #$70
+  CLC
+  ADC SIDE
+  ADC SIDE
+  ADC SIDE
+  ADC SIDE
+  ADC SIDE
+  ADC SIDE
+  CMP #$80
+  BEQ END_SLIDE
+  JMP NEXT_OFFSET
 
 NEXT_SQUARE:
   TSX              ;-----------------------------
