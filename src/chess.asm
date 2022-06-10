@@ -287,15 +287,15 @@ MAKE_MOVE:
   ;STA BOARD,Y     ;
   ;---------------------------------------------
   
-  ;TSX             ;-----------------------------
-  ;TXA             ;
-  ;CLC             ;      Get search depth
-  ;ADC #$0C        ; (see stack map for details)
-  ;TAX             ;
-  ;LDA $0100,X     ;
-  ;SEC             ;-----------------------------
-  ;SBC #$01        ;     Search recursively
-  ;JSR SEARCH      ;-----------------------------
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;      Get search depth
+  ADC #$0C         ; (see stack map for details)
+  TAX              ;
+  LDA $0100,X      ;
+  SEC              ;-----------------------------
+  SBC #$01         ;     Search recursively
+  JSR SEARCH       ;-----------------------------
 
 TAKE_BACK:
   ;board[dst_square] = captured_piece;
