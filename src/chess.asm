@@ -28,7 +28,7 @@ BOARD:                                                   ; 0x88 cgess board + PS
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
-  DCB $00, $00, $12, $12, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
+  DCB $00, $00, $13, $00, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
   DCB $00, $00, $00, $09, $00, $00, $00, $00,   $00, $00, $01, $02, $02, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $01, $01, $01, $01, $00, $00,
   DCB $00, $00, $00, $00, $00, $00, $00, $00,   $00, $00, $00, $00, $00, $00, $00, $00,
@@ -129,14 +129,14 @@ SEARCH:            ;-----------------------------
 
 SQ_LOOP:           ;-----------------------------
   BIT OFFBOARD     ;    Skip offboard squares
-  BNE BRIDGE       ;-----------------------------
+  BNE SQ_BRIDGE       ;-----------------------------
   TAY              ;  
   LDA BOARD,Y      ;  Get piece at board square
   DEX              ;   and store it, skip if
   DEX              ;         wrong color
   STA $0100,X      ;         
   BIT SIDE         ;
-  BEQ BRIDGE       ;-----------------------------
+  BEQ SQ_BRIDGE       ;-----------------------------
   AND #$07         ;     Extract piece type
   DEX              ;        and store it
   STA $0100,X      ;-----------------------------
@@ -161,7 +161,7 @@ OFFSET_LOOP:
   DEX              ;
   STA $0100,X      ;-----------------------------
   CMP #$00         ;  Break if no more offsets
-  BEQ BRIDGE       ;-----------------------------
+  BEQ SQ_BRIDGE    ;-----------------------------
   TXA              ;
   CLC              ;
   ADC #$06         ;       Set up DST_SQAURE
@@ -171,7 +171,7 @@ OFFSET_LOOP:
   STA $0100,X      ;-----------------------------
   JMP SLIDE_LOOP
   
-BRIDGE:
+SQ_BRIDGE:
   JMP NEXT_SQUARE
 
 SLIDE_LOOP:
@@ -190,7 +190,7 @@ SLIDE_LOOP:
   ADC $0100,X      ;
   STA $0100,X      ;-----------------------------
   BIT OFFBOARD     ; Break if hit the board edge
-  BNE NEXT_OFFSET  ;-----------------------------
+  BNE OFF_BRIDGE   ;-----------------------------
   TAY              ;
   TSX              ;
   TXA              ;
@@ -201,8 +201,7 @@ SLIDE_LOOP:
   LDA BOARD,Y      ;
   STA $0100,X      ;-----------------------------
   BIT SIDE         ;  Don't capture own pieces
-  BNE NEXT_OFFSET  ;-----------------------------
-  
+  BNE NEXT_OFFSET  ;
   INX              ;-----------------------------
   LDA $0100,X      ;
   SEC              ;   If piece type is a pawn
@@ -210,30 +209,53 @@ SLIDE_LOOP:
   BCC IS_PAWN      ;
   JMP CHECK_KING   ;-----------------------------
 
-IS_PAWN:
-  DEX
-  LDA $0100,X ; load captured piece
-  TAY
-  DEX
-  DEX
-  LDA $0100,X
-  AND #$07
-  CMP #$00
-  BEQ PAWN_PUSH
-  BNE PAWN_CAPTURE
+OFF_BRIDGE:
+  JMP NEXT_OFFSET
 
-PAWN_PUSH:
-  TYA
-  CMP #$00
-  BNE NEXT_OFFSET
-  JMP CHECK_KING
+IS_PAWN:
+  DEX              ;-----------------------------
+  LDA $0100,X      ;     Load captured piece
+  TAY              ;-----------------------------
+  DEX              ;
+  DEX              ;
+  LDA $0100,X      ;  Distinguish between push
+  AND #$07         ;    and capture offsets
+  CMP #$00         ;
+  BEQ PAWN_PUSH    ;
+  BNE PAWN_CAPTURE ;-----------------------------
+
+PAWN_PUSH:         ;-----------------------------
+  TYA              ;
+  CMP #$00         ;  Push pawn if empty square
+  BNE NEXT_OFFSET  ;           is ahead
+  JMP CHECK_KING   ;-----------------------------
 
 PAWN_CAPTURE:
-  TYA
-  CMP #$00
-  BEQ NEXT_OFFSET
+  TYA              ;-----------------------------
+  CMP #$00         ;   Capture if piece if any
+  BEQ NEXT_OFFSET  ;-----------------------------
 
 CHECK_KING:
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$07         ;
+  TAX              ;      Is king captured?
+  LDA $0100,X      ;
+  AND #$07         ;
+  CMP #$03         ;
+  BEQ IS_KING      ;
+  JMP MAKE_MOVE    ;-----------------------------
+  
+IS_KING:
+  TSX              ;-----------------------------
+  INX              ;
+  LDA #$AA         ; Retunr +INF on king capture
+  STA $0100,X      ;
+  JMP RETURN       ;-----------------------------
+
+MAKE_MOVE:
+
   ;---------------------------------------------
   DEBUG:
   TSX
@@ -245,12 +267,8 @@ CHECK_KING:
   LDA #$01
   STA BOARD,Y      ; DEBUG
   ;---------------------------------------------
-
-  ;
-  ;
-  ;
-  JMP NEXT_OFFSET
-
+  
+  
   ;TSX             ;-----------------------------
   ;TXA             ;
   ;CLC             ;      Get search depth
