@@ -41,7 +41,7 @@ PSCORE: DCB $00                                            ; Positional score
 SCORE: DCB $00                                             ; Score returned by search
 BESTSRC: DCB $00                                           ; Best from square
 BESTDST: DCB $00                                           ; Best target square
-SIDE: DCB $10                                              ; Side to move
+SIDE: DCB $08                                              ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 WHITE: DCB $08
 
@@ -85,7 +85,7 @@ DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $31, $1F, $85, $1C
 
 START:             ;-----------------------------
   CLD              ;-----------------------------
-  LDA #$01         ;      Search position
+  LDA #$02         ;      Search position
   JSR SEARCH       ;        with depth 3
   BRK              ;-----------------------------
   BRK              ;        Program ends
@@ -171,7 +171,6 @@ MINUS:
   STA $0100,X
 
 END_EVAL:
-  BRK
   JMP RETURN       ;
 
 EVAL_BRIDGE:
@@ -441,10 +440,17 @@ NEXT_SQUARE:       ;
   LDA $0100,X      ; 
   CMP #$80         ;
   BNE REP_SQ       ;
-  BEQ RETURN       ;----------------------------
+  BEQ RETURN_BEST  ;----------------------------
                    ;
 REP_SQ:            ;
   JMP SQ_LOOP      ;
+
+RETURN_BEST:
+  TSX
+  INX
+  LDA $0100,X
+  INX
+  STA $0100,X
                    ;
 RETURN:            ;
   TSX              ;-----------------------------
