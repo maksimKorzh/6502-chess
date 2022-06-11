@@ -44,11 +44,12 @@ BESTDST: DCB $00                                           ; Best target square
 SIDE: DCB $08                                              ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 NEGATIVE: DCB $80                                          ; Negative bit
+WHITE: DCB $08
 
 ;=================================
 ;  ($00BA-$01FF) Fake RAM bytes
 ;=================================
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $FF, $00, $00, $00, $00, $00, $00, $16, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
@@ -110,12 +111,34 @@ BRD_LOOP:          ;
 SCR:
   AND #$0F
   TAX
-  LDA MSCORE
+  LDA MSCORE       ; Material score
   CLC
   ADC WEIGHTS,X
-  STA MSCORE
-  ;BRK
-  
+  STA MSCORE       ;-----------------------------
+  LDA BOARD,Y
+  BIT WHITE        ;
+  BEQ POS_B
+
+POS_W:
+  TYA
+  CLC
+  ADC #$08
+  TAX
+  LDA PSCORE
+  CLC
+  ADC BOARD,X
+  STA PSCORE
+  JMP SKIP_SQ
+
+POS_B:
+  TYA
+  CLC
+  ADC #$08
+  TAX
+  LDA PSCORE
+  SEC
+  SBC BOARD,X
+  STA PSCORE
   
 SKIP_SQ:
   TYA
@@ -126,7 +149,7 @@ SKIP_SQ:
   JMP BRD_LOOP
   
 RET_EVAL:
-  ;BRK
+  BRK
   JMP RETURN       ;
                    ;
 SEARCH:            ;-----------------------------
