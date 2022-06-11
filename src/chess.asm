@@ -44,13 +44,14 @@ BESTDST: DCB $00                                           ; Best target square
 SIDE: DCB $08                                              ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 WHITE: DCB $08                                             ; White side bit
+TSRC: DCB $00
+TDST: DCB $00
 
 ;=================================
 ;  ($00BF-$00FF) Fake RAM bytes
 ;=================================
 
-DCB $00 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $FF, $00, $00, $00, $00, $00, $00, $16, $00, $00, $01, $00, $00, $01
@@ -361,17 +362,16 @@ RECURSION:         ;
   SEC              ;-----------------------------
   SBC #$01         ;     Search recursively
   JSR SEARCH       ;-----------------------------
+  TSX              ;
+  TXA              ;
+  SEC              ;
+  SBC #$0C         ;         Negate score
+  TAX              ;
+  LDA #$00         ;
+  SEC              ;
+  SBC $0100,X      ;
+  STA SCORE        ;-----------------------------
                    ;
-  TSX              ; Negate score
-  TXA
-  SEC
-  SBC #$0C
-  TAX
-  LDA #$00
-  SEC
-  SBC $0100,X
-  STA SCORE
-
 TAKE_BACK:         ;
   TSX              ;-----------------------------
   TXA              ;
@@ -399,8 +399,43 @@ TAKE_BACK:         ;
   STA SIDE         ;-----------------------------
                    ;
 COMPARE_SCORE:     ;
-;-------------------
-;-------------------
+  TSX
+  INX
+  LDA $0100,X
+  SEC
+  SBC SCORE
+  BVC DONE_CMP
+  EOR #$80
+
+DONE_CMP:
+  BMI UPDATE_SCORE
+  JMP CONT
+
+UPDATE_SCORE:
+  LDA SCORE
+  STA $0100,X
+  TSX
+  TXA
+  CLC
+  ADC #$0B
+  TAX
+  LDA $0100,X
+  STA TSRC
+  DEX
+  LDA $0100,X
+  STA TDST
+  TSX
+  INX
+  INX
+  INX
+  LDA TDST
+  STA $0100,X
+  INX
+  LDA TSRC
+  STA $0100,X
+  BRK 
+
+CONT:
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;
