@@ -42,13 +42,10 @@ OFFSETS:
   DCB $0E, $F2,  $12, $EE, $1F, $E1, $21, $DF,  $00,       ; knights
   DCB $04, $00,  $0D, $16, $11, $08, $0D                   ; starting indexes
 
-WEIGHTS: DCB $00, $03, $03, $00, $09, $09, $0F, $1B, $00   ; .PP.NBRQK
+WEIGHTS: DCB $00, $00, $FD, $00, $F7, $F7, $F1, $E5, $00   ; ..pknbrq.
+         DCB $03, $00, $00, $09, $09, $0F, $1B             ; P.KBNRQ
 MSCORE: DCB $00                                            ; Material score
 PSCORE: DCB $00                                            ; Positional score
-MATW: DCB $00                                              ; Material score white
-MATB: DCB $00                                              ; Material score black
-POSW: DCB $00                                              ; Positional score white
-POSB: DCB $00                                              ; Positional score black
 SCORE: DCB $00                                             ; Score returned by search
 BESTSRC: DCB $00                                           ; Best from square
 BESTDST: DCB $00                                           ; Best target square
@@ -59,7 +56,7 @@ NEGATIVE: DCB $80                                          ; Negative bit
 ;=================================
 ;  ($00BA-$01FF) Fake RAM bytes
 ;=================================
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $FF, $00, $00, $00, $00, $00, $00, $16, $00, $00, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
@@ -115,9 +112,16 @@ BRD_LOOP:          ;
   BIT OFFBOARD
   BNE SKIP_SQ
   TAY
-  
-  LDA #$FF
-  STA BOARD,Y
+  LDA BOARD,Y
+  CMP #$00
+  BNE SCR
+  JMP SKIP_SQ
+
+SCR:
+  AND #$07
+  TAX
+  LDA WEIGHTS,X
+  ;BRK
   
   
 SKIP_SQ:
@@ -129,7 +133,6 @@ SKIP_SQ:
   JMP BRD_LOOP
   
 RET_EVAL:
-  BRK
   JMP RETURN       ;
                    ;
 SEARCH:            ;-----------------------------

@@ -40,9 +40,8 @@ uint8_t move_offsets[] = {
    0x04, 0x00,  0x0D, 0x16, 0x11, 0x08, 0x0D                  // starting indexes
 };
 
-uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00};
+uint8_t piece_weights_s[] = { 0x00, 0x00, 0xFD, 0x00, 0xF7, 0xF7, 0xF1, 0xE5, 0x00, 0x03, 0x00, 0x00, 0x09, 0x09, 0x0F, 0x1B };
 uint8_t mat_score = 0x00, pos_score = 0x00;
-uint8_t mat_white = 0x00, mat_black = 0x00, pos_white = 0x00, pos_black = 0x00;
 int8_t score = 0x00;
 uint8_t best_src = 0x00, best_dst = 0x00;
 uint8_t side = 0x08;
@@ -53,24 +52,18 @@ uint8_t Search(uint8_t depth) {
   uint8_t src_square, dst_square, piece, type, captured_piece, directions, step_vector;
   
   if (depth == 0x00) {
-    mat_white = 0x00, mat_black = 0x00, pos_white = 0x00; pos_black = 0x00;
-    
+    mat_score = 0x00, pos_score = 0x00;
+
     for(src_square = 0; src_square < 0x80; src_square++) {
       if(!(src_square & 0x88)) {
         if(board[src_square]) {          
-          if (board[src_square] & 0x08) mat_white += piece_weights[board[src_square] & 0x07];
-          else mat_black += piece_weights[board[src_square] & 0x07];
-          if (board[src_square] & 0x08) pos_white += board[src_square + 0x08];
-          else pos_black += board[src_square + 0x08];
+          mat_score += piece_weights_s[board[src_square] & 15];
+          (board[src_square] & 0x08) ? (pos_score += board[src_square + 0x08]) : (pos_score -= board[src_square + 0x08]);
         }
       }
     }
-    
-    mat_score = mat_white - mat_black;
-    pos_score = pos_white - pos_black;
-    uint8_t ep = (mat_score + pos_score);
-    uint8_t en = 0-(mat_score + pos_score);
-    return (side == 0x08) ? ep : en;
+
+    return (side == 0x08) ? (mat_score + pos_score) : -(mat_score + pos_score);
   }
    
   for(src_square = 0x00; src_square < 0x80; src_square++) {
@@ -149,8 +142,9 @@ void PrintBoard() {
 
 // COMPILE: gcc proto.c -o proto
 int main () {
-  uint8_t s = 0-0x7F;
-  printf("%x\n", s);
+  uint8_t x = 3;
+  uint8_t y = x+0xFD;
+  printf("0x%X\n", y);
   while(1) {
     uint8_t score = Search(0x03);
     board[best_dst] = board[best_src];
