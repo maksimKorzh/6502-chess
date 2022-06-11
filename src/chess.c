@@ -43,12 +43,12 @@ uint8_t move_offsets[] = {
 uint8_t piece_weights[] = { 0x00, 0x03, 0x03, 0x00, 0x09, 0x09, 0x0F, 0x1B, 0x00};
 uint8_t mat_score = 0x00, pos_score = 0x00;
 uint8_t mat_white = 0x00, mat_black = 0x00, pos_white = 0x00, pos_black = 0x00;
-uint8_t score = 0x00;
+int8_t score = 0x00;
 uint8_t best_src = 0x00, best_dst = 0x00;
 uint8_t side = 0x08;
 
 uint8_t Search(uint8_t depth) {
-  uint8_t best_score = 0xFF, found_better = 0x00;
+  int8_t best_score = 0x81, found_better = 0x00;
   uint8_t temp_src = 0x00, temp_dst = 0x00;
   uint8_t src_square, dst_square, piece, type, captured_piece, directions, step_vector;
   
@@ -65,34 +65,12 @@ uint8_t Search(uint8_t depth) {
         }
       }
     }
-
-    if ((mat_white - mat_black) >= 0x00) mat_score = mat_white - mat_black;
-    else mat_score = (mat_black - mat_white) | 0x80;
     
-    if ((pos_white - pos_black) >= 0x00) pos_score = pos_white - pos_black;
-    else pos_score = (pos_black - pos_white) | 0x80;
-    
-    if ((mat_score & 0x80) && (pos_score & 0x80)) {
-      mat_score &= 0x7F;
-      pos_score &= 0x7F;
-      return (side == 0x08) ? (mat_score + pos_score) | 0x80 : (mat_score + pos_score);
-    }
-    
-    else if (mat_score & 0x80) {
-      mat_score &= 0x7F;
-      pos_score &= 0x7F;
-      if (pos_score >= mat_score) return (side == 0x08) ? (pos_score - mat_score) : (pos_score - mat_score) | 0x80;
-      else return (side == 0x08) ? (mat_score - pos_score) | 0x80 : (mat_score - pos_score);
-    }
-    
-    else if (pos_score & 0x80) {
-      mat_score &= 0x7F;
-      pos_score &= 0x7F;
-      if (mat_score >= pos_score) return (side == 0x08) ? (mat_score - pos_score) : (mat_score - pos_score) | 0x80;
-      else return (side == 0x08) ? (pos_score - mat_score) | 0x80 : (pos_score - mat_score);
-    }
-
-    else return (side == 0x08) ? (mat_score + pos_score) : (mat_score + pos_score) | 0x80;
+    mat_score = mat_white - mat_black;
+    pos_score = pos_white - pos_black;
+    uint8_t ep = (mat_score + pos_score);
+    uint8_t en = 0-(mat_score + pos_score);
+    return (side == 0x08) ? ep : en;
   }
    
   for(src_square = 0x00; src_square < 0x80; src_square++) {
@@ -113,18 +91,11 @@ uint8_t Search(uint8_t depth) {
             board[dst_square] = piece;
             board[src_square] = 0x00;
             side = 0x18 - side;
-            //PrintBoard(); getchar();
-            score = Search(depth - 0x01);
-            score = (score & 0x80) ? (score & 0x7F) : (score | 0x80);
+            score = 0-Search(depth - 0x01);
             board[dst_square] = captured_piece;
             board[src_square] = piece;
             side = 0x18 - side;
-            //PrintBoard(); getchar();
-            if ((score & 0x80) == 0x00 && (best_score & 0x80) == 0x00) found_better = ((score & 0x7F) > (best_score & 0x7F)) ? 0x01 : 0x00;
-            else if ((score & 0x80) && (best_score & 0x80)) found_better = ((score & 0x7F) < (best_score & 0x7F)) ? 0x01 : 0x00;
-            else if ((score & 0x80) == 0x00 && (best_score & 0x80)) found_better = 0x01;
-            else if ((score & 0x80) && (best_score & 0x80) == 0x00) found_better = 0x00;
-            if (found_better) {             
+            if (best_score < score) {
               best_score = score;
               temp_src = src_square;
               temp_dst = dst_square;
@@ -178,10 +149,8 @@ void PrintBoard() {
 
 // COMPILE: gcc proto.c -o proto
 int main () {
-  uint8_t x = 0x10;
-  uint8_t z = 0;
-  printf("%X\n", z -= x);
-  PrintBoard();
+  uint8_t s = 0-0x7F;
+  printf("%x\n", s);
   while(1) {
     uint8_t score = Search(0x03);
     board[best_dst] = board[best_src];

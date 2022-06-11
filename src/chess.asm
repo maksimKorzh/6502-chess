@@ -94,17 +94,17 @@ DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $31, $1F, $85, $1C
 ; (SP + 1) : BEST_SCORE
 ; --------------------------------
 
-START:
+START:             ;-----------------------------
   CLD              ;-----------------------------
   LDA #$03         ;      Search position
   JSR SEARCH       ;        with depth 3
   BRK              ;-----------------------------
   BRK              ;        Program ends
   BRK              ;-----------------------------
-
-EVALUATE:
-  JMP RETURN
-
+                   ;
+EVALUATE:          ;
+  JMP RETURN       ;
+                   ;
 SEARCH:            ;-----------------------------
   PHA              ;     Store search depth
   TSX              ;-----------------------------
@@ -113,7 +113,7 @@ SEARCH:            ;-----------------------------
   SBC #$0A         ; (see stack map for details)
   TAX              ;
   TXS              ;-----------------------------
-  LDA #$FF         ;       Set BEST_SCORE
+  LDA #$81         ;       Set BEST_SCORE
   PHA              ;        to -INFINITY
   TSX              ;-----------------------------
   TXA              ;
@@ -126,7 +126,7 @@ SEARCH:            ;-----------------------------
   DEX              ;-----------------------------
   LDA #$00         ;     Set SRC_SQUARE to 0
   STA $0100,X      ;-----------------------------
-
+                   ;
 SQ_LOOP:           ;-----------------------------
   BIT OFFBOARD     ;    Skip offboard squares
   BNE SQ_BRIDGE    ;-----------------------------
@@ -136,7 +136,7 @@ SQ_LOOP:           ;-----------------------------
   DEX              ;         wrong color
   STA $0100,X      ;         
   BIT SIDE         ;
-  BEQ SQ_BRIDGE       ;-----------------------------
+  BEQ SQ_BRIDGE    ;-----------------------------
   AND #$07         ;     Extract piece type
   DEX              ;        and store it
   STA $0100,X      ;-----------------------------
@@ -147,8 +147,8 @@ SQ_LOOP:           ;-----------------------------
   DEX              ;  starting index to loop over
   DEX              ;
   STA $0100,X      ;-----------------------------
-
-OFFSET_LOOP:
+                   ;
+OFFSET_LOOP:       ;
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;   Extract direction offset
@@ -169,12 +169,12 @@ OFFSET_LOOP:
   LDA $0100,X      ;
   DEX              ;
   STA $0100,X      ;-----------------------------
-  JMP SLIDE_LOOP
-  
-SQ_BRIDGE:
-  JMP NEXT_SQUARE
-
-SLIDE_LOOP:
+  JMP SLIDE_LOOP   ;
+                   ;-----------------------------
+SQ_BRIDGE:         ;    Needed because of the
+  JMP NEXT_SQUARE  ; branching range (-128 + 127)
+                   ;-----------------------------
+SLIDE_LOOP:        ;
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;      Load step vector
@@ -208,11 +208,11 @@ SLIDE_LOOP:
   CMP #$03         ;      verify pawn moves
   BCC IS_PAWN      ;
   JMP CHECK_KING   ;-----------------------------
-
-OFF_BRIDGE:
-  JMP NEXT_OFFSET
-
-IS_PAWN:
+                   ;-----------------------------
+OFF_BRIDGE:        ;
+  JMP NEXT_OFFSET  ;    Needed because of the
+                   ; branching range (-128 + 127)
+IS_PAWN:           ;
   DEX              ;-----------------------------
   LDA $0100,X      ;     Load captured piece
   TAY              ;-----------------------------
@@ -223,19 +223,19 @@ IS_PAWN:
   CMP #$00         ;
   BEQ PAWN_PUSH    ;
   BNE PAWN_CAPTURE ;-----------------------------
-
+                   ;
 PAWN_PUSH:         ;-----------------------------
   TYA              ;
   CMP #$00         ;  Push pawn if empty square
   BNE OFF_BRIDGE   ;           is ahead
   JMP CHECK_KING   ;-----------------------------
-
-PAWN_CAPTURE:
+                   ;
+PAWN_CAPTURE:      ;
   TYA              ;-----------------------------
   CMP #$00         ;   Capture if piece if any
   BEQ OFF_BRIDGE   ;-----------------------------
-
-CHECK_KING:
+                   ;
+CHECK_KING:        ;
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;
@@ -246,47 +246,35 @@ CHECK_KING:
   CMP #$03         ;
   BEQ IS_KING      ;
   JMP MAKE_MOVE    ;-----------------------------
-  
-IS_KING:
+                   ;
+IS_KING:           ;
   TSX              ;-----------------------------
   INX              ;
   LDA #$AA         ; Retunr +INF on king capture
   STA $0100,X      ;
   JMP RETURN       ;-----------------------------
-
-MAKE_MOVE:
-  TSX
-  TXA
-  CLC
-  ADC #$0A
-  TAX
-  LDY $0100,X
-  DEX
-  LDA $0100,X
-  STA BOARD,Y
-  INX
-  INX
-  LDY $0100,X
-  LDA #$00
+                   ;
+MAKE_MOVE:         ;
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$0A         ;
+  TAX              ;
+  LDY $0100,X      ;
+  DEX              ;  BOARD[DST_SQUARE] = PIECE
+  LDA $0100,X      ;  BOARD[SRC_SQUARE] = 0x00
   STA BOARD,Y      ;
-  LDA #$18
-  SEC
-  SBC SIDE
-  STA SIDE
-  ;BRK
-  
-  ;---------------------------------------------
-  ;DEBUG:          ;
-  ;TSX             ;
-  ;TXA             ;
-  ;CLC             ;        DEBUG CODE:
-  ;ADC #$0A        ;  Marks DST_SQUARE with $01
-  ;TAX             ;
-  ;LDY $0100,X     ;
-  ;LDA #$01        ;
-  ;STA BOARD,Y     ;
-  ;---------------------------------------------
-  
+  INX              ;
+  INX              ;
+  LDY $0100,X      ;
+  LDA #$00         ;
+  STA BOARD,Y      ;-----------------------------
+  LDA #$18         ;
+  SEC              ;   Change the side to move
+  SBC SIDE         ;
+  STA SIDE         ;-----------------------------
+                   ;
+RECURSION:         ;
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;      Get search depth
@@ -296,38 +284,34 @@ MAKE_MOVE:
   SEC              ;-----------------------------
   SBC #$01         ;     Search recursively
   JSR SEARCH       ;-----------------------------
-
-TAKE_BACK:
-  ;board[dst_square] = captured_piece;
-  ;board[src_square] = piece;
-  ;side = 0x18 - side;
-  TSX
-  TXA
-  CLC
-  ADC #$0A
-  TAX
-  LDY $0100,X
-  DEX
-  DEX
-  DEX
-  LDA $0100,X
-  STA BOARD,Y
-  INX
-  INX
-  INX
-  INX
-  LDY $0100,X
-  DEX
-  DEX
-  LDA $0100,X
-  STA BOARD,Y      ;
-  LDA #$18
-  SEC
-  SBC SIDE
-  STA SIDE
-  ;BRK
-
-COMPARE_SCORE:
+                   ;
+TAKE_BACK:         ;
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$0A         ;
+  TAX              ;
+  LDY $0100,X      ;
+  DEX              ;
+  DEX              ;
+  DEX              ;  
+  LDA $0100,X      ;  BOARD[DST_SQUARE] = CAP_P*
+  STA BOARD,Y      ;  BOARD[SRC_SQUARE] = PIECE
+  INX              ;  
+  INX              ;  *CAP_P is CAPTURED_PIECE
+  INX              ;
+  INX              ;
+  LDY $0100,X      ;
+  DEX              ;
+  DEX              ;
+  LDA $0100,X      ;
+  STA BOARD,Y      ;-----------------------------
+  LDA #$18         ;
+  SEC              ;   Change the side to move
+  SBC SIDE         ;
+  STA SIDE         ;-----------------------------
+                   ;
+COMPARE_SCORE:     ;
 ;-------------------
 ;-------------------
   TSX              ;-----------------------------
@@ -345,36 +329,36 @@ COMPARE_SCORE:
   SEC              ;   Skip sliding for leapers   
   CMP #$05         ;
   BCC NEXT_OFFSET  ;-----------------------------
-
-END_SLIDE:
-  TYA
-  CMP #$00         ;
+                   ;
+END_SLIDE:         ;-----------------------------
+  TYA              ;
+  CMP #$00         ;  Slide to the next square
   BNE NEXT_OFFSET  ;
   JMP SLIDE_LOOP   ;-----------------------------
-
-NEXT_OFFSET:
-  JMP OFFSET_LOOP
-
-IS_DOUBLE:
-  TSX
-  TXA
-  CLC
-  ADC #$0A
-  TAX
-  LDA $0100,X
-  AND #$70
-  CLC
-  ADC SIDE
-  ADC SIDE
-  ADC SIDE
-  ADC SIDE
-  ADC SIDE
-  ADC SIDE
-  CMP #$80
-  BEQ END_SLIDE
-  JMP NEXT_OFFSET
-
-NEXT_SQUARE:
+                   ;
+NEXT_OFFSET:       ;   Go to the next offset
+  JMP OFFSET_LOOP  ;-----------------------------
+                   ;
+IS_DOUBLE:         ;
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;
+  ADC #$0A         ;
+  TAX              ;
+  LDA $0100,X      ;
+  AND #$70         ;
+  CLC              ;  Slide one extra square if
+  ADC SIDE         ; the pawn is on 2nd/7th rank
+  ADC SIDE         ;
+  ADC SIDE         ;
+  ADC SIDE         ;
+  ADC SIDE         ;
+  ADC SIDE         ;
+  CMP #$80         ;
+  BEQ END_SLIDE    ;
+  JMP NEXT_OFFSET  ;-----------------------------
+                   ;
+NEXT_SQUARE:       ;
   TSX              ;-----------------------------
   TXA              ;
   CLC              ;
@@ -383,20 +367,20 @@ NEXT_SQUARE:
   INC $0100,X      ;
   LDA $0100,X      ; 
   CMP #$80         ;
-  BNE REP_SQ       ;----------------------------
-  BEQ RETURN
-
-REP_SQ:
-  JMP SQ_LOOP
-
-RETURN:
-  TSX          ;-----------------------------
-  TXA          ;
-  CLC          ;   Free up local variables
-  ADC #$0C     ; (see stack map for details)
-  TAX          ;          and return
-  TXS          ;
-  RTS          ;-----------------------------
+  BNE REP_SQ       ;
+  BEQ RETURN       ;----------------------------
+                   ;
+REP_SQ:            ;
+  JMP SQ_LOOP      ;
+                   ;
+RETURN:            ;
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;   Free up local variables
+  ADC #$0C         ; (see stack map for details)
+  TAX              ;          and return
+  TXS              ;
+  RTS              ;-----------------------------
 
 BREAK:
   BRK
