@@ -142,9 +142,6 @@ void PrintBoard() {
 
 // COMPILE: gcc proto.c -o proto
 int main () {
-  uint8_t x = 3;
-  uint8_t y = x+0xFD;
-  printf("0x%X\n", y);
   while(1) {
     uint8_t score = Search(0x03);
     board[best_dst] = board[best_src];

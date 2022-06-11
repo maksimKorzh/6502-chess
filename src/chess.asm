@@ -41,7 +41,7 @@ PSCORE: DCB $00                                            ; Positional score
 SCORE: DCB $00                                             ; Score returned by search
 BESTSRC: DCB $00                                           ; Best from square
 BESTDST: DCB $00                                           ; Best target square
-SIDE: DCB $08                                              ; Side to move
+SIDE: DCB $10                                              ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 WHITE: DCB $08
 
@@ -171,6 +171,7 @@ MINUS:
   STA $0100,X
 
 END_EVAL:
+  BRK
   JMP RETURN       ;
 
 EVAL_BRIDGE:
