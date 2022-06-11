@@ -143,11 +143,11 @@ void PrintBoard() {
 // COMPILE: gcc proto.c -o proto
 int main () {
   while(1) {
-    uint8_t score = Search(0x03);
+    uint8_t score = Search(0x02);
     board[best_dst] = board[best_src];
     board[best_src] = 0;
     side = 0x18 - side;
-    PrintBoard(); // getchar();
+    PrintBoard(); getchar();
     if (score == abs(0x7F)) break;
   }
   PrintBoard();
