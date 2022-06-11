@@ -36,11 +36,11 @@ WEIGHTS:
   DCB $00, $00, $FD, $00, $F7, $F7, $F1, $E5, $00          ; ..pknbrq.
   DCB $03, $00, $00, $09, $09, $0F, $1B                    ; P.KBNRQ
 
-MSCORE: DCB $00                                            ; Material score
-PSCORE: DCB $00                                            ; Positional score
-SCORE: DCB $00                                             ; Score returned by search
-BESTSRC: DCB $00                                           ; Best from square
-BESTDST: DCB $00                                           ; Best target square
+MSCORE: DCB $00     ;00B7                                       ; Material score
+PSCORE: DCB $00     ;00B8                                       ; Positional score
+SCORE: DCB $00      ;00B9                                       ; Score returned by search
+BESTSRC: DCB $00    ;00BA                                       ; Best from square
+BESTDST: DCB $00    ;00BB                                       ; Best target square
 SIDE: DCB $08                                              ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 WHITE: DCB $08                                             ; White side bit
@@ -433,7 +433,6 @@ UPDATE_SCORE:
   INX
   LDA TSRC
   STA $0100,X
-  BRK 
 
 CONT:
   TSX              ;-----------------------------
@@ -498,9 +497,18 @@ REP_SQ:            ;
 RETURN_BEST:
   TSX
   INX
-  LDA $0100,X
+  LDA $0100,X      ;       Store best score
+  INX              ;       as return value
+  STA $0100,X      ;
+  TSX
   INX
-  STA $0100,X
+  INX
+  INX
+  LDA $0100,X      ;     Associate best score
+  STA BESTDST      ;        with best move
+  INX
+  LDA $0100,X
+  STA BESTSRC
                    ;
 RETURN:            ;
   TSX              ;-----------------------------
