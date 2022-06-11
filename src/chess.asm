@@ -96,13 +96,40 @@ DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $31, $1F, $85, $1C
 
 START:             ;-----------------------------
   CLD              ;-----------------------------
-  LDA #$03         ;      Search position
+  LDA #$01         ;      Search position
   JSR SEARCH       ;        with depth 3
   BRK              ;-----------------------------
   BRK              ;        Program ends
   BRK              ;-----------------------------
                    ;
 EVALUATE:          ;
+  LDA #$00         ;-----------------------------
+  STA MATW         ;
+  STA MATB         ;   Reset score aggregators
+  STA POSW         ;
+  STA POSB         ;-----------------------------
+  LDY #$0          ;
+
+BRD_LOOP:          ;
+  TYA
+  BIT OFFBOARD
+  BNE SKIP_SQ
+  TAY
+  
+  LDA #$FF
+  STA BOARD,Y
+  
+  
+SKIP_SQ:
+  TYA
+  CMP #$80
+  BEQ RET_EVAL
+  TAY
+  INY
+  JMP BRD_LOOP
+  
+RET_EVAL:
+  BRK
   JMP RETURN       ;
                    ;
 SEARCH:            ;-----------------------------
@@ -381,6 +408,3 @@ RETURN:            ;
   TAX              ;          and return
   TXS              ;
   RTS              ;-----------------------------
-
-BREAK:
-  BRK
