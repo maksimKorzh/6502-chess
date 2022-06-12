@@ -43,4 +43,5 @@ Chess program written in 6502 assembly to run on <a href="https://github.com/mak
     
 
 # How to play
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/htcQenMfkuo/0.jpg)](https://www.youtube.com/watch?v=htcQenMfkuo&feature=youtu.be)
     
