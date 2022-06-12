@@ -1,5 +1,10 @@
-# 6502 chess
+# 6502 chess program for unexpanded KIM-1
 Chess program written in 6502 assembly to run on <a href="https://github.com/maksimKorzh/KIM-1">KIM-1 emulator</a>
+
+# Program size
+    DATA SEGMENT: 192 bytes (board, move offsets, etc.)
+    CODE SEGMENT: 717 bytes (search, make move & display)
+           TOTAL: 909 bytes of KIM-1 RAM
 
 # How to run
     1. Copy and paste the code from src/chess.asm
