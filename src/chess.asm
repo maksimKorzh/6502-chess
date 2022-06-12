@@ -12,7 +12,7 @@
 ;=================================
 
 ;=================================
-;    ($0000-$00B9) VARIABLES
+;    ($0000-$00C0) VARIABLES
 ;=================================
 BOARD:                                                   ; 0x88 cgess board + PST
   DCB $16, $14, $15, $17, $13, $15, $14, $16,   $00, $00, $00, $00, $00, $00, $00, $00,
@@ -44,11 +44,11 @@ BESTDST: DCB $00    ; $00BB                                ; Best target square
 SIDE: DCB $08       ; $00BC                                ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 WHITE: DCB $08                                             ; White side bit
-TSRC: DCB $00
-TDST: DCB $00
+TSRC: DCB $00                                              ; TEMP_SRC temp storage
+TDST: DCB $00                                              ; TEMP_DST temp storage
 
-EVAL_BRIDGE:
-  JMP EVALUATE
+EVAL_BRIDGE:       ;-----------------------------
+  JMP EVALUATE     ;       Bridge to jump
                    ;
 SEARCH:            ;-----------------------------
   PHA              ;     Store search depth
@@ -69,9 +69,9 @@ SEARCH:            ;-----------------------------
   CMP #$0          ;        On leaf node
   BEQ EVAL_BRIDGE  ;     evaluate position
   DEX              ;-----------------------------
-  LDA #$00         ;     Set SRC_SQUARE to 0
-  STA $0100,X      ;-----------------------------
-  JMP SQ_LOOP
+  LDA #$00         ;     Set SRC_SQUARE to 0,
+  STA $0100,X      ;     go to the next square
+  JMP SQ_LOOP      ;-----------------------------
 
 ;=================================
 ;  ($00E5-$00FF) Fake RAM bytes
@@ -80,96 +80,115 @@ SEARCH:            ;-----------------------------
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $FF, $00, $00, $00, $00, $00, $00, $16, $00, $00, $01, $00, $00, $01
 
-EVALUATE:          ;
-  LDA #$00         ;-----------------------------
-  STA MSCORE       ;
+EVALUATE:          ;-----------------------------
+  LDA #$00         ;
+  STA MSCORE       ;  Static position evaluation
   STA PSCORE       ;
-  LDY #$0          ;
-
-BRD_LOOP:          ;
-  TYA
-  BIT OFFBOARD
-  BNE SKIP_SQ
-  TAY
-  LDA BOARD,Y
-  CMP #$00
-  BNE SCR
-  JMP SKIP_SQ
-
-SCR:
-  AND #$0F
-  TAX
-  LDA MSCORE       ; Material score
-  CLC
-  ADC WEIGHTS,X
+  LDY #$0          ;-----------------------------
+                   ;
+BRD_LOOP:          ;-----------------------------
+  TYA              ;
+  BIT OFFBOARD     ;
+  BNE SKIP_SQ      ;   Loop over board squares,
+  TAY              ;  consider only those square
+  LDA BOARD,Y      ;      occupied by pieces
+  CMP #$00         ;
+  BNE SCR          ;
+  JMP SKIP_SQ      ;-----------------------------
+                   ;
+SCR:               ;-----------------------------
+  AND #$0F         ;
+  TAX              ;
+  LDA MSCORE       ;  Calculate material score
+  CLC              ;
+  ADC WEIGHTS,X    ;
   STA MSCORE       ;-----------------------------
-  LDA BOARD,Y
+  LDA BOARD,Y      ;
+  BIT WHITE        ;       Get piece color
+  BEQ POS_B        ;-----------------------------
+                   ;
+POS_W:             ;-----------------------------
+  TYA              ;
+  CLC              ;
+  ADC #$08         ;
+  TAX              ;
+  LDA PSCORE       ;      Add white PST score
+  CLC              ;
+  ADC BOARD,X      ;
+  STA PSCORE       ;
+  JMP SKIP_SQ      ;-----------------------------
+                   ;
+POS_B:             ;-----------------------------
+  TYA              ;
+  CLC              ;
+  ADC #$08         ;
+  TAX              ;   Subtract black PST score
+  LDA PSCORE       ;
+  SEC              ;
+  SBC BOARD,X      ;
+  STA PSCORE       ;-----------------------------
+                   ;
+SKIP_SQ:           ;-----------------------------
+  TYA              ;
+  CMP #$80         ;
+  BEQ RET_EVAL     ;    Go to the next square
+  TAY              ;
+  INY              ;
+  JMP BRD_LOOP     ;-----------------------------
+                   ;
+RET_EVAL:          ;-----------------------------
+  TSX              ;
+  INX              ;
+  INX              ;    Store evaluation score
+  LDA SIDE         ;  ot stack as a return value
   BIT WHITE        ;
-  BEQ POS_B
-
-POS_W:
-  TYA
-  CLC
-  ADC #$08
-  TAX
-  LDA PSCORE
-  CLC
-  ADC BOARD,X
-  STA PSCORE
-  JMP SKIP_SQ
-
-POS_B:
-  TYA
-  CLC
-  ADC #$08
-  TAX
-  LDA PSCORE
-  SEC
-  SBC BOARD,X
-  STA PSCORE
-  
-SKIP_SQ:
-  TYA
-  CMP #$80
-  BEQ RET_EVAL
-  TAY
-  INY
-  JMP BRD_LOOP
-  
-RET_EVAL:
-  TSX
-  INX
-  INX            ; return stack addr
-  LDA SIDE 
-  BIT WHITE
-  BEQ MINUS
-
-PLUS:
-  LDA MSCORE
-  CLC            ; score
-  ADC PSCORE
-  STA $0100,X
-  JMP END_EVAL
-
-MINUS:
-  LDA #$00
-  SEC
-  SBC MSCORE
-  SEC
-  SBC PSCORE
-  STA $0100,X
-
-END_EVAL:
+  BEQ MINUS        ;-----------------------------
+                   ;
+PLUS:              ;-----------------------------
+  LDA MSCORE       ;
+  CLC              ;     Return positive score
+  ADC PSCORE       ;           for white
+  STA $0100,X      ;
+  JMP END_EVAL     ;-----------------------------
+                   ;
+MINUS:             ;-----------------------------
+  LDA #$00         ;
+  SEC              ;    Return negative score
+  SBC MSCORE       ;          for black
+  SEC              ;
+  SBC PSCORE       ;
+  STA $0100,X      ;-----------------------------
+                   ;
+END_EVAL:          ;-----------------------------
   JMP RETURN       ;
+                   ;
+ENGINE_MOVE:       ;-----------------------------
+  LDX BESTSRC      ;
+  LDY BESTDST      ;
+  LDA BOARD,X      ;  Make engine move on board
+  STA BOARD,Y      ;
+  LDA #$00         ;
+  STA BOARD,X      ;-----------------------------
+  LDA #$18         ;
+  SEC              ;   Change the side to move
+  SBC SIDE         ;
+  STA SIDE         ;-----------------------------
+                   ;
+DISPLAY:           ;-----------------------------
+  LDX BESTSRC      ;
+  LDY BESTDST      ;
+  LDA #$00         ;
+  STX $FB          ;     Display engine move
+  STY $FA          ;
+  STA $F9          ;
+  JSR $1F1F        ;
+  JMP DISPLAY      ;-----------------------------
 
 ;=================================
 ;  ($0183-$01FF) Fake RAM bytes
 ;=================================
 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
@@ -196,34 +215,10 @@ DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $39, $1F, $85, $
 ; --------------------------------
 
 START:             ;-----------------------------
-  CLD              ;-----------------------------
+  CLD              ;
   LDA #$03         ;      Search position
   JSR SEARCH       ;        with depth 3
-
-ENGINE_MOVE:
-  LDX BESTSRC
-  LDY BESTDST
-  LDA BOARD,X
-  STA BOARD,Y
-  LDA #$00
-  STA BOARD,X
-  LDA #$18         ;
-  SEC              ;   Change the side to move
-  SBC SIDE         ;
-  STA SIDE         ;-----------------------------
-
-DISPLAY:
-  LDX BESTSRC
-  LDY BESTDST
-  LDA #$00
-  STX $FB
-  STY $FA
-  STA $F9
-  JSR $1F1F
-  JMP DISPLAY
-  BRK              ;-----------------------------
-  BRK              ;        Program ends
-  BRK              ;-----------------------------
+  JMP ENGINE_MOVE
                    ;
 SQ_LOOP:           ;-----------------------------
   BIT OFFBOARD     ;    Skip offboard squares
@@ -246,12 +241,12 @@ SQ_LOOP:           ;-----------------------------
   DEX              ;
   STA $0100,X      ;-----------------------------
                    ;
-OFFSET_LOOP:       ;
-  TSX              ;-----------------------------
-  TXA              ;
-  CLC              ;   Extract direction offset
-  ADC #$06         ;       starting index
-  TAX              ;      and increment it
+OFFSET_LOOP:       ;-----------------------------
+  TSX              ;
+  TXA              ;   Extract direction offset
+  CLC              ;       starting index
+  ADC #$06         ;      and increment it
+  TAX              ;
   INC $0100,X      ;-----------------------------
   LDA $0100,X      ;
   TAY              ;   Get next step vector of
@@ -345,23 +340,23 @@ CHECK_KING:        ;
   BEQ IS_KING      ;
   JMP MAKE_MOVE    ;-----------------------------
                    ;
-IS_KING:           ;
-  TSX              ;-----------------------------
+IS_KING:           ;-----------------------------
+  TSX              ;
   INX              ;
-  INX              ;
-  LDA #$7F         ; Return +INF on king capture
+  INX              ; Return +INF on king capture
+  LDA #$7F         ;
   STA $0100,X      ;
   JMP RETURN       ;-----------------------------
                    ;
-MAKE_MOVE:         ;
-  TSX              ;-----------------------------
+MAKE_MOVE:         ;-----------------------------
+  TSX              ;
   TXA              ;
   CLC              ;
   ADC #$0A         ;
   TAX              ;
-  LDY $0100,X      ;
-  DEX              ;  BOARD[DST_SQUARE] = PIECE
-  LDA $0100,X      ;  BOARD[SRC_SQUARE] = 0x00
+  LDY $0100,X      ;  BOARD[DST_SQUARE] = PIECE
+  DEX              ;  BOARD[SRC_SQUARE] = 0x00
+  LDA $0100,X      ;
   STA BOARD,Y      ;
   INX              ;
   INX              ;
@@ -373,8 +368,8 @@ MAKE_MOVE:         ;
   SBC SIDE         ;
   STA SIDE         ;-----------------------------
                    ;
-RECURSION:         ;
-  TSX              ;-----------------------------
+RECURSION:         ;-----------------------------
+  TSX              ;
   TXA              ;
   CLC              ;      Get search depth
   ADC #$0C         ; (see stack map for details)
@@ -393,20 +388,20 @@ RECURSION:         ;
   SBC $0100,X      ;
   STA SCORE        ;-----------------------------
                    ;
-TAKE_BACK:         ;
-  TSX              ;-----------------------------
+TAKE_BACK:         ;-----------------------------
+  TSX              ;
   TXA              ;
   CLC              ;
   ADC #$0A         ;
   TAX              ;
   LDY $0100,X      ;
   DEX              ;
-  DEX              ;
-  DEX              ;  
-  LDA $0100,X      ;  BOARD[DST_SQUARE] = CAP_P*
-  STA BOARD,Y      ;  BOARD[SRC_SQUARE] = PIECE
+  DEX              ;  BOARD[DST_SQUARE] = CAP_P*
+  DEX              ;  BOARD[SRC_SQUARE] = PIECE  
+  LDA $0100,X      ;
+  STA BOARD,Y      ;  *CAP_P is CAPTURED_PIECE
   INX              ;  
-  INX              ;  *CAP_P is CAPTURED_PIECE
+  INX              ;
   INX              ;
   INX              ;
   LDY $0100,X      ;
@@ -419,47 +414,47 @@ TAKE_BACK:         ;
   SBC SIDE         ;
   STA SIDE         ;-----------------------------
                    ;
-COMPARE_SCORE:     ;
-  TSX
-  INX
-  LDA $0100,X
-  SEC
-  SBC SCORE
-  BVC DONE_CMP
-  EOR #$80
-
-DONE_CMP:
-  BMI UPDATE_SCORE
-  JMP CONT
-
-UPDATE_SCORE:
-  LDA SCORE
-  STA $0100,X
-  TSX
-  TXA
-  CLC
-  ADC #$0B
-  TAX
-  LDA $0100,X
-  STA TSRC
-  DEX
-  LDA $0100,X
-  STA TDST
-  TSX
-  INX
-  INX
-  INX
-  LDA TDST
-  STA $0100,X
-  INX
-  LDA TSRC
-  STA $0100,X
-
-CONT:
-  TSX              ;-----------------------------
+COMPARE_SCORE:     ;-----------------------------
+  TSX              ;
+  INX              ;
+  LDA $0100,X      ; Signed comparison of score
+  SEC              ;        and best score
+  SBC SCORE        ;
+  BVC DONE_CMP     ;
+  EOR #$80         ;-----------------------------
+                   ;
+DONE_CMP:          ;-----------------------------
+  BMI UPDATE_SCORE ;
+  JMP CONT         ; Update score if better move
+                   ;
+UPDATE_SCORE:      ;-----------------------------
+  LDA SCORE        ;
+  STA $0100,X      ;
+  TSX              ;
   TXA              ;
   CLC              ;
-  ADC #$07         ;   Stop sliding on capture
+  ADC #$0B         ;
+  TAX              ;
+  LDA $0100,X      ;
+  STA TSRC         ;      BEST_SCORE = SCORE
+  DEX              ;      TEMP_SRC = SRC_SQUARE
+  LDA $0100,X      ;      TEMP_DST = DST_SQUARE
+  STA TDST         ;
+  TSX              ;
+  INX              ;
+  INX              ;
+  INX              ;
+  LDA TDST         ;
+  STA $0100,X      ;
+  INX              ;
+  LDA TSRC         ;
+  STA $0100,X      ;-----------------------------
+                   ;
+CONT:              ;-----------------------------
+  TSX              ;
+  TXA              ;
+  CLC              ;   Stop sliding on capture
+  ADC #$07         ;
   TAX              ;
   LDA $0100,X      ;
   TAY              ;-----------------------------
@@ -512,24 +507,24 @@ NEXT_SQUARE:       ;
   BNE REP_SQ       ;
   BEQ RETURN_BEST  ;----------------------------
                    ;
-REP_SQ:            ;
+REP_SQ:            ;----------------------------
   JMP SQ_LOOP      ;
-
-RETURN_BEST:
-  TSX
-  INX
+                   ;
+RETURN_BEST:       ;----------------------------
+  TSX              ;
+  INX              ;
   LDA $0100,X      ;       Store best score
   INX              ;       as return value
   STA $0100,X      ;
-  TSX
-  INX
-  INX
-  INX
+  TSX              ;----------------------------
+  INX              ;
+  INX              ;
+  INX              ;
   LDA $0100,X      ;     Associate best score
   STA BESTDST      ;        with best move
-  INX
-  LDA $0100,X
-  STA BESTSRC
+  INX              ;
+  LDA $0100,X      ;
+  STA BESTSRC      ;
                    ;
 RETURN:            ;
   TSX              ;-----------------------------
