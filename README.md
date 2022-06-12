@@ -30,16 +30,16 @@ Chess program written in 6502 assembly to run on <a href="https://github.com/mak
     so if you're in the endgame, make sure the search depth is equal to 3.
     
 # Board & pieces
-    00 16 14 15 17 13 15 14 16    Coordinates layout: RANK+FILE e.g. 64 = E2 
-    10 12 12 12 12 12 12 12 12
-    20 00 00 00 00 00 00 00 00    $09 - White pawn      $12 - Black pawn
-    30 00 00 00 00 00 00 00 00    $0C - White knight    $14 - Black knight
-    40 00 00 00 00 00 00 00 00    $0D - White bishop    $15 - Black bishop
-    50 00 00 00 00 00 00 00 00    $0E - White rook      $16 - Black rook
-    60 09 09 09 09 09 09 09 09    $0F - White queen     $17 - Black queen
-    70 0E 0C 0D 0F 0B 0D 0C 0E    $0B - White king      $13 - Black king
+    00  16 14 15 17 13 15 14 16    Coordinates layout: RANK+FILE e.g. 64 = E2 
+    10  12 12 12 12 12 12 12 12
+    20  00 00 00 00 00 00 00 00    $09 - White pawn      $12 - Black pawn
+    30  00 00 00 00 00 00 00 00    $0C - White knight    $14 - Black knight
+    40  00 00 00 00 00 00 00 00    $0D - White bishop    $15 - Black bishop
+    50  00 00 00 00 00 00 00 00    $0E - White rook      $16 - Black rook
+    60  09 09 09 09 09 09 09 09    $0F - White queen     $17 - Black queen
+    70  0E 0C 0D 0F 0B 0D 0C 0E    $0B - White king      $13 - Black king
         
-       00 01 02 03 04 05 06 07    $00BC - Side to move, $08: white, $10: black
+        00 01 02 03 04 05 06 07    $00BC - Side to move, $08: white, $10: black
     
 
 # How to play
