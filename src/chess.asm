@@ -47,13 +47,37 @@ WHITE: DCB $08                                             ; White side bit
 TSRC: DCB $00
 TDST: DCB $00
 
+EVAL_BRIDGE:
+  JMP EVALUATE
+                   ;
+SEARCH:            ;-----------------------------
+  PHA              ;     Store search depth
+  TSX              ;-----------------------------
+  TXA              ;
+  SEC              ;    Init local variables
+  SBC #$0A         ; (see stack map for details)
+  TAX              ;
+  TXS              ;-----------------------------
+  LDA #$81         ;       Set BEST_SCORE
+  PHA              ;        to -INFINITY
+  TSX              ;-----------------------------
+  TXA              ;
+  CLC              ;      Get search depth
+  ADC #$0C         ; (see stack map for details)
+  TAX              ;
+  LDA $0100,X      ;-----------------------------
+  CMP #$0          ;        On leaf node
+  BEQ EVAL_BRIDGE  ;     evaluate position
+  DEX              ;-----------------------------
+  LDA #$00         ;     Set SRC_SQUARE to 0
+  STA $0100,X      ;-----------------------------
+  JMP SQ_LOOP
+
 ;=================================
-;  ($00BF-$00FF) Fake RAM bytes
+;  ($00E5-$00FF) Fake RAM bytes
 ;=================================
 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $FF, $00, $00, $00, $00, $00, $00, $16, $00, $00, $01, $00, $00, $01
 
 EVALUATE:          ;
@@ -175,34 +199,31 @@ START:             ;-----------------------------
   CLD              ;-----------------------------
   LDA #$03         ;      Search position
   JSR SEARCH       ;        with depth 3
+
+ENGINE_MOVE:
+  LDX BESTSRC
+  LDY BESTDST
+  LDA BOARD,X
+  STA BOARD,Y
+  LDA #$00
+  STA BOARD,X
+  LDA #$18         ;
+  SEC              ;   Change the side to move
+  SBC SIDE         ;
+  STA SIDE         ;-----------------------------
+
+DISPLAY:
+  LDX BESTSRC
+  LDY BESTDST
+  LDA #$00
+  STX $FB
+  STY $FA
+  STA $F9
+  JSR $1F1F
+  JMP DISPLAY
   BRK              ;-----------------------------
   BRK              ;        Program ends
   BRK              ;-----------------------------
-
-EVAL_BRIDGE:
-  JMP EVALUATE
-                   ;
-SEARCH:            ;-----------------------------
-  PHA              ;     Store search depth
-  TSX              ;-----------------------------
-  TXA              ;
-  SEC              ;    Init local variables
-  SBC #$0A         ; (see stack map for details)
-  TAX              ;
-  TXS              ;-----------------------------
-  LDA #$81         ;       Set BEST_SCORE
-  PHA              ;        to -INFINITY
-  TSX              ;-----------------------------
-  TXA              ;
-  CLC              ;      Get search depth
-  ADC #$0C         ; (see stack map for details)
-  TAX              ;
-  LDA $0100,X      ;-----------------------------
-  CMP #$0          ;        On leaf node
-  BEQ EVAL_BRIDGE  ;     evaluate position
-  DEX              ;-----------------------------
-  LDA #$00         ;     Set SRC_SQUARE to 0
-  STA $0100,X      ;-----------------------------
                    ;
 SQ_LOOP:           ;-----------------------------
   BIT OFFBOARD     ;    Skip offboard squares
