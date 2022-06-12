@@ -24,7 +24,7 @@ Chess program written in 6502 assembly to run on <a href="https://github.com/mak
     a move, in a complicated middlegame positions it may take up to
     half an hour to come up with a best move. So  you may want to change
     the search depth to speed up KIM's thinking process, just alter
-    the value at $0202 for that purpose. Beware though - values greater
+    the value at $0201 for that purpose. Beware though - values greater
     than 3 would take ages to complete, while values 2 and 1 would result
     in a faster play but the engine would not be capable of finding a mate,
     so if you're in the endgame, make sure the search depth is equal to 3.
@@ -39,7 +39,7 @@ Chess program written in 6502 assembly to run on <a href="https://github.com/mak
     60 09 09 09 09 09 09 09 09    $0F - White queen     $17 - Black queen
     70 0E 0C 0D 0F 0B 0D 0C 0E    $0B - White king      $13 - Black king
         
-       00 01 02 03 04 05 06 07 
+       00 01 02 03 04 05 06 07    $00BC - Side to move, $08: white, $10: black
     
 
 # How to play
