@@ -36,12 +36,12 @@ WEIGHTS:
   DCB $00, $00, $FD, $00, $F7, $F7, $F1, $E5, $00          ; ..pknbrq.
   DCB $03, $00, $00, $09, $09, $0F, $1B                    ; P.KBNRQ
 
-MSCORE: DCB $00     ;00B7                                       ; Material score
-PSCORE: DCB $00     ;00B8                                       ; Positional score
-SCORE: DCB $00      ;00B9                                       ; Score returned by search
-BESTSRC: DCB $00    ;00BA                                       ; Best from square
-BESTDST: DCB $00    ;00BB                                       ; Best target square
-SIDE: DCB $08                                              ; Side to move
+MSCORE: DCB $00     ; $00B7                                ; Material score
+PSCORE: DCB $00     ; $00B8                                ; Positional score
+SCORE: DCB $00      ; $00B9                                ; Score returned by search
+BESTSRC: DCB $00    ; $00BA                                ; Best from square
+BESTDST: DCB $00    ; $00BB                                ; Best target square
+SIDE: DCB $08       ; $00BC                                ; Side to move
 OFFBOARD: DCB $88                                          ; Offboard constant
 WHITE: DCB $08                                             ; White side bit
 TSRC: DCB $00
@@ -173,7 +173,7 @@ DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $39, $1F, $85, $
 
 START:             ;-----------------------------
   CLD              ;-----------------------------
-  LDA #$02         ;      Search position
+  LDA #$03         ;      Search position
   JSR SEARCH       ;        with depth 3
   BRK              ;-----------------------------
   BRK              ;        Program ends
