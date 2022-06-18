@@ -41,7 +41,13 @@ Chess program written in 6502 assembly to run on <a href="https://github.com/mak
         
         00 01 02 03 04 05 06 07    $00BC - Side to move, $08: white, $10: black
     
+# TTY version
+    Now the version printing the board to the serial monitor is available,
+    see src/chess_tty - engine would print the board if in serial mode. If
+    you want to print the board after making a move use 03F6 [SPACE][G] in
+    TTY mode. 
 
 # How to play
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/htcQenMfkuo/0.jpg)](https://www.youtube.com/watch?v=htcQenMfkuo&feature=youtu.be)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/NUW7MyQdrdo/0.jpg)](https://youtu.be/NUW7MyQdrdo)
     

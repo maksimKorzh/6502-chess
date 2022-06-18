@@ -34,7 +34,7 @@ OFFSETS:
 
 WEIGHTS:
   DCB $00, $00, $FD, $00, $F7, $F7, $F1, $E5, $00          ; ..pknbrq.
-  DCB $03, $00, $00, $09, $09, $0F, $1B                    ; P.KNBRQ
+  DCB $03, $00, $00, $09, $09, $0F, $1B                    ; P.KBNRQ
 
 MSCORE: DCB $00     ; $00B7                                ; Material score
 PSCORE: DCB $00     ; $00B8                                ; Positional score
@@ -181,23 +181,23 @@ ENGINE_MOVE:       ;-----------------------------
   SEC              ;   Change the side to move
   SBC SIDE         ;
   STA SIDE         ;-----------------------------
-                   ;
-DISPLAY:           ;-----------------------------
-  LDX BESTSRC      ;
-  LDY BESTDST      ;
-  LDA #$00         ;
-  STX $FB          ;     Display engine move
-  STY $FA          ;
-  STA $F9          ;
-  JSR $1F1F        ;
-  JMP DISPLAY      ;-----------------------------
+  JMP PRINT_BOARD  ;   Print board after move
+  BRK              ;-----------------------------
 
 ;=================================
 ;  ($01B1-$01FF) Fake RAM bytes
 ;=================================
 
+PIECES:
+  DCB $2E, $00, $70, $6B, $6E, $62, $72, $71, $00          ; ..pknbrq.
+  DCB $50, $00, $4B, $4E, $42, $52, $51                    ; P.KNBRQ
+
+;=================================
+;  ($01B1-$01FF) Fake RAM bytes
+;=================================
+ 
+DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
-DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
 DCB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $39, $1F, $85, $1C
@@ -542,3 +542,43 @@ RETURN:            ;
   TAX              ;          and return
   TXS              ;
   RTS              ;-----------------------------
+                   ;
+PRINT_BOARD:       ;-----------------------------
+  LDA #$0D         ;
+  JSR $1EA0        ;
+  LDA #$0D         ;
+  JSR $1EA0        ;
+  LDY #$00         ;
+                   ;
+PRINT_LOOP:        ;
+  TYA              ;
+  BIT OFFBOARD     ;
+  BNE PRINT_NEXT   ;
+  LDA BOARD,Y      ;
+  AND #$0F         ;
+  TAX              ;
+  LDA PIECES,X     ;         Print board
+  JSR $1EA0        ;    to the serial monitor
+  JSR $1E9E        ;
+  TYA              ;
+  CMP #$77         ;
+  BEQ END_PRINT    ;
+  AND #$07         ;
+  CMP #$07         ;
+  BEQ NEW_LINE     ;
+  JMP PRINT_NEXT   ;
+                   ;
+NEW_LINE:          ;
+  LDA #$0D         ;
+  JSR $1EA0        ;
+                   ;
+PRINT_NEXT:        ;
+  INY              ;
+  JMP PRINT_LOOP   ;
+                   ;
+END_PRINT:         ;
+  LDA SIDE         ;
+  JSR $1E3B        ;
+  LDA #$0D         ;
+  JSR $1EA0        ;
+  BRK              ;-----------------------------
