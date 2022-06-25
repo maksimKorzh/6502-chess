@@ -6,6 +6,9 @@ Chess program written in 6502 assembly to run on <a href="https://github.com/mak
     CODE SEGMENT: 717 bytes (search, make move & display)
            TOTAL: 909 bytes of KIM-1 RAM
 
+# Development progress & Demos
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/POTjQXYuv7I/0.jpg)](https://www.youtube.com/watch?v=POTjQXYuv7I&list=PLmN0neTso3JwdHRU2W4sit0xOK7P-LRMS)
+
 # How to run
     1. Copy and paste the code from src/chess.asm
        to the code editor at KIM-1 emulator
