@@ -546,7 +546,11 @@ RETURN:            ;
 PRINT_BOARD:       ;-----------------------------
   LDA #$0D         ;
   JSR $1EA0        ;
+  LDA #$0A         ;
+  JSR $1EA0        ;
   LDA #$0D         ;
+  JSR $1EA0        ;
+  LDA #$0A         ;
   JSR $1EA0        ;
   LDY #$00         ;
                    ;
@@ -571,6 +575,8 @@ PRINT_LOOP:        ;
 NEW_LINE:          ;
   LDA #$0D         ;
   JSR $1EA0        ;
+  LDA #$0A         ;
+  JSR $1EA0        ;
                    ;
 PRINT_NEXT:        ;
   INY              ;
@@ -580,5 +586,7 @@ END_PRINT:         ;
   LDA SIDE         ;
   JSR $1E3B        ;
   LDA #$0D         ;
+  JSR $1EA0        ;
+  LDA #$0A         ;
   JSR $1EA0        ;
   BRK              ;-----------------------------
